@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+alembic = "1.13.0"
+asyncio = "3.4.3"
+asyncpg = "0.29.0"
+fastapi = "0.104.1"
+pydantic = "2.5.2"
+uvicorn = "0.24.0"
+SQLAlchemy = "2.0.23"
+aioredis = "2.0.1"
+boto3 = "*"
+aioboto3 = "*"
+pyjwt = "2.8.0"
+python-dotenv = "1.0.0"
+
+[dev-packages]
+black = "23.11.0"
+isort = "5.12.0"
+pre-commit = "3.2.0"
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.0"
