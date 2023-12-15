@@ -1,14 +1,13 @@
 from sqlalchemy import (
     UUID,
     Boolean,
-    Column,
     DateTime,
     Enum,
     ForeignKey,
-    Integer,
     String,
+    func,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import mapped_column, relationship
 
 from src.adapters.database.database_settings import Base
 from src.ports.enums import Role
@@ -17,16 +16,20 @@ from src.ports.enums import Role
 class User(Base):
     __tablename__ = "users"
 
-    ID = Column(UUID, primary_key=True, index=True)
-    Name = Column(String, nullable=False)
-    Surname = Column(String, nullable=False)
-    Phone_number = Column(String, nullable=False)
-    Email = Column(String, nullable=False)
-    Role = Column(Enum(Role, name="role_enum", native_enum=False), nullable=False)
-    Group_id = Column(Integer, ForeignKey("groups.ID"), nullable=False)
-    Image = Column(String, nullable=False)
-    IsBlocked = Column(Boolean, nullable=False)
-    Created_at = Column(DateTime, nullable=False)
-    Modified_at = Column(DateTime, nullable=False)
+    ID = mapped_column(UUID, primary_key=True, index=True)
+    Name = mapped_column(String(15), nullable=True)
+    Surname = mapped_column(String(15), nullable=True)
+    Phone_number = mapped_column(String(15), nullable=True)
+    Email = mapped_column(String, nullable=False)
+    Role = mapped_column(
+        Enum(Role, name="role_enum", native_enum=False),
+        nullable=False,
+        default=Role.USER,
+    )
+    Group_id = mapped_column(UUID, ForeignKey("groups.ID"), nullable=False)
+    Image = mapped_column(String, nullable=True)
+    IsBlocked = mapped_column(Boolean, nullable=False, default=False)
+    Created_at = mapped_column(DateTime, nullable=False, default=func.now())
+    Modified_at = mapped_column(DateTime, nullable=True)
 
     group = relationship("Group", back_populates="user", lazy="select", uselist=False)
