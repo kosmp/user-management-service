@@ -1,18 +1,22 @@
-from src.adapters.config.settings import PydanticSettings
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.engine import URL
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from contextlib import asynccontextmanager
 
-engine = create_async_engine(f"postgresql+{PydanticSettings.db_engine}://{PydanticSettings.postgres_user}:{PydanticSettings.postgres_user_password}@{PydanticSettings.postgres_host}:{PydanticSettings.postgres_port}/{PydanticSettings.postgres_database_name}")
+from src.app import settings
 
 Base = declarative_base()
 
-@asynccontextmanager
-async def get_session():
-    try:
-        async_session = async_session_generator()
+database_url = URL.create(**settings.get_db_creds)
 
+async_engine = create_async_engine(database_url, echo=True, future=True)
+
+
+async def get_async_session() -> AsyncSession:
+    async_session = sessionmaker(
+        bind=async_engine, class_=AsyncSession, expire_on_commit=False
+    )
+    try:
         async with async_session() as session:
             yield session
     except:
@@ -20,9 +24,3 @@ async def get_session():
         raise
     finally:
         await session.close()
-
-
-def async_session_generator():
-    return sessionmaker(
-        engine, class_=AsyncSession
-    )
