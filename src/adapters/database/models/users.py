@@ -16,20 +16,20 @@ from src.ports.enums import Role
 class User(Base):
     __tablename__ = "users"
 
-    ID = mapped_column(UUID, primary_key=True, index=True)
-    Name = mapped_column(String(15), nullable=True)
-    Surname = mapped_column(String(15), nullable=True)
-    Phone_number = mapped_column(String(15), nullable=True)
-    Email = mapped_column(String, nullable=False)
-    Role = mapped_column(
+    id = mapped_column(UUID, primary_key=True, index=True)
+    name = mapped_column(String(15), nullable=True)
+    surname = mapped_column(String(15), nullable=True)
+    phone_number = mapped_column(String(15), nullable=True)
+    email = mapped_column(String, nullable=False)
+    role = mapped_column(
         Enum(Role, name="role_enum", native_enum=False),
         nullable=False,
         default=Role.USER,
     )
-    Group_id = mapped_column(UUID, ForeignKey("groups.ID"), nullable=False)
-    Image = mapped_column(String, nullable=True)
-    IsBlocked = mapped_column(Boolean, nullable=False, default=False)
-    Created_at = mapped_column(DateTime, nullable=False, default=func.now())
-    Modified_at = mapped_column(DateTime, nullable=True)
+    group_id = mapped_column(UUID, ForeignKey("groups.id"), nullable=False)
+    image = mapped_column(String, nullable=True)
+    is_blocked = mapped_column(Boolean, nullable=False, default=False)
+    created_at = mapped_column(DateTime, nullable=False, default=func.now())
+    modified_at = mapped_column(DateTime, nullable=True)
 
-    group = relationship("Group", back_populates="user", lazy="select", uselist=False)
+    group = relationship("Group", back_populates="users", lazy="select", uselist=False)

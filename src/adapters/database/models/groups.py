@@ -7,11 +7,11 @@ from src.adapters.database.database_settings import Base
 class Group(Base):
     __tablename__ = "groups"
 
-    ID = mapped_column(UUID, primary_key=True, index=True)
-    Name = mapped_column(String(15), nullable=False, unique=True)
-    Created_at = mapped_column(DateTime, nullable=False, default=func.now())
+    id = mapped_column(UUID, primary_key=True, index=True)
+    name = mapped_column(String(15), nullable=False, unique=True)
+    created_at = mapped_column(DateTime, nullable=False, default=func.now())
 
-    user = relationship("User", back_populates="group", lazy="joined")
+    users = relationship("User", back_populates="group", lazy="joined", uselist=True)
 
 
-Index("idx_unique_name", Group.Name, unique=True)
+Index("idx_unique_name", Group.name, unique=True)
