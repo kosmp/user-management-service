@@ -7,7 +7,7 @@ from typing import Union
 
 class GroupRepository(ABC):
     @abstractmethod
-    async def create_group(self, group_name: ValidatedGroupName) -> Group:
+    async def create_group(self, group_name: ValidatedGroupName.group_name) -> Group:
         pass
 
     @abstractmethod

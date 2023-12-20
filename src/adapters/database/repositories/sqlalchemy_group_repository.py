@@ -13,9 +13,9 @@ class SQLAlchemyGroupRepository(GroupRepository):
     def __init__(self, db: Session):
         self.db = db
 
-    async def create_group(self, group_name: ValidatedGroupName) -> Group:
+    async def create_group(self, group_name: ValidatedGroupName.group_name) -> Group:
         try:
-            new_group = Group(name=group_name.name)
+            new_group = Group(name=group_name)
 
             self.db.add(new_group)
             await self.db.commit()
@@ -35,13 +35,15 @@ class SQLAlchemyGroupRepository(GroupRepository):
         except Exception as err:
             raise DatabaseConnectionException
 
-    async def delete_group(self, group_id: UUID5) -> Union[Group, None]:
+    async def delete_group(self, group_id: UUID5) -> bool:
         try:
             query = delete(Group).where(
                 and_(Group.id == group_id, len(Group.users) == 0)
             )
-            await self.db.execute(query)
+            res = await self.db.execute(query).fetchone()
 
+            if res is None:
+                return False
             return True
         except Exception as err:
             await self.db.rollback()

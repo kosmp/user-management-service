@@ -1,11 +1,17 @@
 from pydantic import UUID5
 from sqlalchemy import select, update, and_
-
+from datetime import datetime, timezone
 from ports.enums import Role
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.user_repository import UserRepository
 from sqlalchemy.orm import Session
-from ports.models.user import UserUpdateData, ValidatedEmail, ValidatedPassword
+from ports.models.user import (
+    UserUpdateData,
+    ValidatedEmail,
+    ValidatedPassword,
+    ValidatedName,
+    ValidatedPhoneNumber,
+)
 from adapters.database.models.users import User
 from typing import Union
 
@@ -16,8 +22,11 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def create_user(
         self,
-        email: ValidatedEmail,
-        password: ValidatedPassword,
+        email: ValidatedEmail.email,
+        name: ValidatedName.name,
+        surname: ValidatedName.name,
+        password: ValidatedPassword.password,
+        phone_number: ValidatedPhoneNumber.phone_number,
         group_id: UUID5,
         role: Role = Role.USER,
     ) -> User:
@@ -51,7 +60,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.is_blocked == False)
-                .values(**user_data)
+                .values(**user_data, modified_at=datetime.now(timezone.utc))
                 .returning(User.id)
             )
             res = await self.db.execute(query).fetchone()
@@ -68,7 +77,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 update(User)
                 .where(and_(User.id == user_id, User.is_blocked == False))
                 .values(is_blocked=True)
-                .returning(User.user_id)
+                .returning(User.id)
             )
             res = await self.db.execute(query).fetchone()
 
