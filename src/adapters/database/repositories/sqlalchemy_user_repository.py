@@ -46,7 +46,7 @@ class SQLAlchemyUserRepository(UserRepository):
         try:
             query = (
                 update(User)
-                .where(User.is_blocked == False)
+                .where(User.id == user_id)
                 .values(**user_data, modified_at=datetime.now(timezone.utc))
             )
             res = await self.db_session.execute(query).fetchone()
