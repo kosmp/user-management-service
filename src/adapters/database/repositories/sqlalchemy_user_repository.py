@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.user_repository import UserRepository
 from sqlalchemy.orm import Session
-from ports.schemas.user import UserUpdateModel, UserCreateModel
+from ports.schemas.user import UserUpdateModel, UserCreateModel, UserResponseModel
 from adapters.database.models.users import User
 from typing import Union
 
@@ -13,7 +13,7 @@ class SQLAlchemyUserRepository(UserRepository):
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    async def create_user(self, user_data: UserCreateModel) -> User:
+    async def create_user(self, user_data: UserCreateModel) -> UserResponseModel:
         try:
             new_user = User(
                 email=user_data.email,
@@ -25,39 +25,40 @@ class SQLAlchemyUserRepository(UserRepository):
             self.db_session.add(new_user)
             await self.db_session.commit()
 
-            return new_user
+            return UserResponseModel(**new_user.dict())
         except Exception as err:
             await self.db_session.rollback()
             raise DatabaseConnectionException
 
-    async def get_user(self, user_id: UUID5) -> Union[User, None]:
+    async def get_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
             query = select(User).where(User.id == user_id)
             res = await self.db_session.execute(query).fetchone()
 
             if res is not None:
-                return res[0]
+                return UserResponseModel(**res[0].dict())
         except Exception as err:
             raise DatabaseConnectionException
 
     async def update_user(
         self, user_id: UUID5, user_data: UserUpdateModel
-    ) -> Union[User, None]:
+    ) -> Union[UserResponseModel, None]:
         try:
             query = (
                 update(User)
                 .where(User.id == user_id)
                 .values(**user_data, modified_at=datetime.now(timezone.utc))
+                .returning(User.id)
             )
             res = await self.db_session.execute(query).fetchone()
 
             if res is not None:
-                return res[0]
+                return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
             raise DatabaseConnectionException
 
-    async def block_user(self, user_id: UUID5) -> Union[User, None]:
+    async def block_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
             query = (
                 update(User)
@@ -68,7 +69,7 @@ class SQLAlchemyUserRepository(UserRepository):
             res = await self.db_session.execute(query).fetchone()
 
             if res is not None:
-                return res[0]
+                return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
             raise DatabaseConnectionException
