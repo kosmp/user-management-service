@@ -47,7 +47,9 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == user_id)
-                .values(**user_data, modified_at=datetime.now(timezone.utc))
+                .values(
+                    **user_data.model_dump(), modified_at=datetime.now(timezone.utc)
+                )
                 .returning(User.id)
             )
             res = (await self.db_session.execute(query)).fetchone()
