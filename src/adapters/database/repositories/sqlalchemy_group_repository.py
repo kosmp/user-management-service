@@ -4,7 +4,7 @@ from adapters.database.models.groups import Group
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.group_repository import GroupRepository
 from sqlalchemy.orm import Session
-from ports.schemas.group import ValidatedGroupName
+from ports.schemas.group import CreateGroupModel
 from pydantic import UUID5
 from typing import Union
 
@@ -13,7 +13,7 @@ class SQLAlchemyGroupRepository(GroupRepository):
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    async def create_group(self, group_name: ValidatedGroupName.group_name) -> Group:
+    async def create_group(self, group_name: CreateGroupModel.group_name) -> Group:
         try:
             new_group = Group(name=group_name)
 

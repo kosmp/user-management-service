@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from ports.schemas.group import ValidatedGroupName
+from ports.schemas.group import CreateGroupModel
 from pydantic import UUID5
-from adapters.database.shemas.groups import Group
+from adapters.database.models.groups import Group
 from typing import Union
 
 
 class GroupRepository(ABC):
     @abstractmethod
-    async def create_group(self, group_name: ValidatedGroupName.group_name) -> Group:
+    async def create_group(self, group_name: CreateGroupModel.group_name) -> Group:
         pass
 
     @abstractmethod
