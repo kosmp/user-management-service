@@ -4,7 +4,7 @@ from adapters.database.models.groups import Group
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.group_repository import GroupRepository
 from sqlalchemy.orm import Session
-from ports.models.group import ValidatedGroupName
+from ports.schemas.group import ValidatedGroupName
 from pydantic import UUID5
 from typing import Union
 

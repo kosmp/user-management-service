@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.user_repository import UserRepository
 from sqlalchemy.orm import Session
-from ports.models.user import UserUpdateModel, UserCreateModel
+from ports.schemas.user import UserUpdateModel, UserCreateModel
 from adapters.database.models.users import User
 from typing import Union
 
