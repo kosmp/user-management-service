@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete, and_
+from sqlalchemy import select, delete
 
 from adapters.database.models.groups import Group
 from app.exceptions import DatabaseConnectionException
@@ -37,9 +37,7 @@ class SQLAlchemyGroupRepository(GroupRepository):
 
     async def delete_group(self, group_id: UUID5) -> bool:
         try:
-            query = delete(Group).where(
-                and_(Group.id == group_id, len(Group.users) == 0)
-            )
+            query = delete(Group).where(Group.id == group_id)
             res = await self.db.execute(query).fetchone()
 
             if res is None:
