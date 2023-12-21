@@ -38,5 +38,5 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_user(self, user_id: UUID5) -> bool:
+    async def block_user(self, user_id: UUID5) -> bool:
         pass

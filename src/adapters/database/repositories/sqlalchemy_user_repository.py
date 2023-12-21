@@ -71,11 +71,11 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.rollback()
             raise DatabaseConnectionException
 
-    async def delete_user(self, user_id: UUID5) -> Union[User, None]:
+    async def block_user(self, user_id: UUID5) -> Union[User, None]:
         try:
             query = (
                 update(User)
-                .where(and_(User.id == user_id, User.is_blocked == False))
+                .where(User.id == user_id)
                 .values(is_blocked=True)
                 .returning(User.id)
             )
