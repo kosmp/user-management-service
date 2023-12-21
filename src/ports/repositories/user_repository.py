@@ -21,7 +21,7 @@ class UserRepository(ABC):
     @abstractmethod
     async def update_user(
         self, user_id: UUID5, user_data: UserUpdateModel
-    ) -> Union[UUID5, None]:
+    ) -> Union[User, None]:
         pass
 
     @abstractmethod

@@ -42,13 +42,12 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def update_user(
         self, user_id: UUID5, user_data: UserUpdateModel
-    ) -> Union[UUID5, None]:
+    ) -> Union[User, None]:
         try:
             query = (
                 update(User)
                 .where(User.is_blocked == False)
                 .values(**user_data, modified_at=datetime.now(timezone.utc))
-                .returning(User.id)
             )
             res = await self.db_session.execute(query).fetchone()
 
