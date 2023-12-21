@@ -35,4 +35,4 @@ class UserUpdateModel(UserBaseWithPassword):
 
 class UserResponseModel(UserBase):
     group_id: UUID5
-    role: Role = Role.USER
+    role: Role
