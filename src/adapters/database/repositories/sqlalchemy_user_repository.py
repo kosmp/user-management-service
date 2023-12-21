@@ -17,8 +17,8 @@ from typing import Union
 
 
 class SQLAlchemyUserRepository(UserRepository):
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, db_session: Session):
+        self.db_session = db_session
 
     async def create_user(
         self,
@@ -35,18 +35,18 @@ class SQLAlchemyUserRepository(UserRepository):
                 email=email, password=password, group_id=group_id, role=role
             )
 
-            self.db.add(new_user)
-            await self.db.commit()
+            self.db_session.add(new_user)
+            await self.db_session.commit()
 
             return new_user
         except Exception as err:
-            await self.db.rollback()
+            await self.db_session.rollback()
             raise DatabaseConnectionException
 
     async def get_user(self, user_id: UUID5) -> Union[User, None]:
         try:
             query = select(User).where(User.id == user_id)
-            res = await self.db.execute(query).fetchone()
+            res = await self.db_session.execute(query).fetchone()
 
             if res is not None:
                 return res[0]
@@ -63,12 +63,12 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(**user_data, modified_at=datetime.now(timezone.utc))
                 .returning(User.id)
             )
-            res = await self.db.execute(query).fetchone()
+            res = await self.db_session.execute(query).fetchone()
 
             if res is not None:
                 return res[0]
         except Exception as err:
-            await self.db.rollback()
+            await self.db_session.rollback()
             raise DatabaseConnectionException
 
     async def delete_user(self, user_id: UUID5) -> Union[User, None]:
@@ -79,10 +79,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(is_blocked=True)
                 .returning(User.id)
             )
-            res = await self.db.execute(query).fetchone()
+            res = await self.db_session.execute(query).fetchone()
 
             if res is not None:
                 return res[0]
         except Exception as err:
-            await self.db.rollback()
+            await self.db_session.rollback()
             raise DatabaseConnectionException
