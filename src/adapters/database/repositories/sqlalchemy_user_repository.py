@@ -1,17 +1,10 @@
 from pydantic import UUID5
-from sqlalchemy import select, update, and_
+from sqlalchemy import select, update
 from datetime import datetime, timezone
-from ports.enums import Role
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.user_repository import UserRepository
 from sqlalchemy.orm import Session
-from ports.models.user import (
-    UserUpdateData,
-    ValidatedEmail,
-    ValidatedPassword,
-    ValidatedName,
-    ValidatedPhoneNumber,
-)
+from ports.models.user import UserUpdateModel, UserCreateModel
 from adapters.database.models.users import User
 from typing import Union
 
@@ -20,19 +13,13 @@ class SQLAlchemyUserRepository(UserRepository):
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    async def create_user(
-        self,
-        email: ValidatedEmail.email,
-        name: ValidatedName.name,
-        surname: ValidatedName.name,
-        password: ValidatedPassword.password,
-        phone_number: ValidatedPhoneNumber.phone_number,
-        group_id: UUID5,
-        role: Role = Role.USER,
-    ) -> User:
+    async def create_user(self, user_data: UserCreateModel) -> User:
         try:
             new_user = User(
-                email=email, password=password, group_id=group_id, role=role
+                email=user_data.email,
+                password=user_data.password,
+                group_id=user_data.group_id,
+                role=user_data.role,
             )
 
             self.db_session.add(new_user)
@@ -54,7 +41,7 @@ class SQLAlchemyUserRepository(UserRepository):
             raise DatabaseConnectionException
 
     async def update_user(
-        self, user_id: UUID5, user_data: UserUpdateData
+        self, user_id: UUID5, user_data: UserUpdateModel
     ) -> Union[UUID5, None]:
         try:
             query = (

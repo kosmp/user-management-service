@@ -3,28 +3,29 @@ from ports.enums import Role
 from typing import Optional
 
 
-class ValidatedEmail(BaseModel):
+class UserBase(BaseModel):
+    name: constr(min_length=1, max_length=15)
     email: constr(regex=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-
-
-class ValidatedPassword(BaseModel):
+    phone_number: constr(regex=r"^\+?[1-9]\d{1,14}$")
     password: constr(min_length=8, max_length=15)
 
 
-class ValidatedName(BaseModel):
-    name: constr(min_length=1, max_length=15)
+class UserCreateModel(UserBase):
+    email: UserBase.email
+    name: UserBase.name
+    surname: UserBase.name
+    phone_number: UserBase.phone_number
+    password: UserBase.password
+    group_id: UUID5
+    role: Role = Role.USER
 
 
-class ValidatedPhoneNumber(BaseModel):
-    phone_number: constr(regex=r"^\+?[1-9]\d{1,14}$")
-
-
-class UserUpdateData(BaseModel):
-    email: Optional[ValidatedEmail.email]
-    name: Optional[ValidatedName.name]
-    surname: Optional[ValidatedName.name]
-    password: Optional[ValidatedPassword.password]
-    phone_number: Optional[ValidatedPhoneNumber.phone_number]
+class UserUpdateModel(UserBase):
+    email: Optional[UserBase.email]
+    name: Optional[UserBase.name]
+    surname: Optional[UserBase.name]
+    password: Optional[UserBase.password]
+    phone_number: Optional[UserBase.phone_number]
     role: Optional[Role]
     group_id: Optional[UUID5]
     image: Optional[str]
