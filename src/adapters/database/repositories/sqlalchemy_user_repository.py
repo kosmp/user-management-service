@@ -4,7 +4,12 @@ from datetime import datetime, timezone
 from app.exceptions import DatabaseConnectionException
 from ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ports.schemas.user import UserUpdateModel, UserCreateModel, UserResponseModel
+from ports.schemas.user import (
+    UserUpdateModel,
+    UserCreateModel,
+    UserResponseModel,
+    UserUpdatePasswordModel,
+)
 from adapters.database.models.users import User
 from typing import Union
 
@@ -50,6 +55,24 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(
                     **user_data.model_dump(), modified_at=datetime.now(timezone.utc)
                 )
+                .returning(User.id)
+            )
+            res = (await self.db_session.execute(query)).fetchone()
+
+            if res is not None:
+                return UserResponseModel(**res[0].dict())
+        except Exception as err:
+            await self.db_session.rollback()
+            raise DatabaseConnectionException
+
+    async def update_password(
+        self, user_id: UUID5, password: UserUpdatePasswordModel.password
+    ) -> Union[UserResponseModel, None]:
+        try:
+            query = (
+                update(User)
+                .where(User.id == user_id)
+                .values(password, modified_at=datetime.now(timezone.utc))
                 .returning(User.id)
             )
             res = (await self.db_session.execute(query)).fetchone()
