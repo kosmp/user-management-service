@@ -1,5 +1,5 @@
 from pydantic import BaseModel, constr, UUID5
-from ports.enums import Role
+from src.ports.enums import Role
 from typing import Optional
 
 

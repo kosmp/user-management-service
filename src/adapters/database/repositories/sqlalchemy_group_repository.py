@@ -1,10 +1,10 @@
 from sqlalchemy import select, delete
 
-from adapters.database.models.groups import Group
-from app.exceptions import DatabaseConnectionException
-from ports.repositories.group_repository import GroupRepository
+from src.adapters.database.models.groups import Group
+from src.core.exceptions import DatabaseConnectionException
+from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ports.schemas.group import CreateGroupModel
+from src.ports.schemas.group import CreateGroupModel
 from pydantic import UUID5
 from typing import Union
 

@@ -1,15 +1,15 @@
 from pydantic import UUID5
 from sqlalchemy import select, update
 from datetime import datetime, timezone
-from app.exceptions import DatabaseConnectionException
-from ports.repositories.user_repository import UserRepository
+from src.core.exceptions import DatabaseConnectionException
+from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ports.schemas.user import (
+from src.ports.schemas.user import (
     UserUpdateModel,
     UserCreateModel,
     UserResponseModel,
 )
-from adapters.database.models.users import User
+from src.adapters.database.models.users import User
 from typing import Union
 
 

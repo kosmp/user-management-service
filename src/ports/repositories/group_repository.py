@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from ports.schemas.group import CreateGroupModel
+from src.ports.schemas.group import CreateGroupModel
 from pydantic import UUID5
-from adapters.database.models.groups import Group
+from src.adapters.database.models.groups import Group
 from typing import Union
 
 
