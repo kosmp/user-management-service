@@ -11,7 +11,13 @@ class Group(Base):
     name = mapped_column(String(15), nullable=False, unique=True)
     created_at = mapped_column(DateTime, nullable=False, default=func.now())
 
-    users = relationship("User", back_populates="group", lazy="joined", uselist=True)
+    users = relationship(
+        "User",
+        back_populates="group",
+        lazy="joined",
+        uselist=True,
+        passive_deletes="all",
+    )
 
 
 Index("idx_unique_name", Group.name, unique=True)

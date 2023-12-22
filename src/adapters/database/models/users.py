@@ -26,7 +26,9 @@ class User(Base):
         nullable=False,
         default=Role.USER,
     )
-    group_id = mapped_column(UUID, ForeignKey("groups.id"), nullable=False)
+    group_id = mapped_column(
+        UUID, ForeignKey("groups.id", ondelete="RESTRICT"), nullable=False
+    )
     image = mapped_column(String, nullable=True)
     is_blocked = mapped_column(Boolean, nullable=False, default=False)
     created_at = mapped_column(DateTime, nullable=False, default=func.now())
