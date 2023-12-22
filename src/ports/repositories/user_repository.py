@@ -5,7 +5,6 @@ from ports.schemas.user import (
     UserCreateModel,
     UserUpdateModel,
     UserResponseModel,
-    UserUpdatePasswordModel,
 )
 from pydantic import UUID5
 
@@ -27,7 +26,7 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def update_password(
-        self, user_id: UUID5, password: UserUpdatePasswordModel.password
+        self, user_id: UUID5, password: str
     ) -> Union[UserResponseModel, None]:
         pass
 

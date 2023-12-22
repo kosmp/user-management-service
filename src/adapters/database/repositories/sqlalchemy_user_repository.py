@@ -8,7 +8,6 @@ from ports.schemas.user import (
     UserUpdateModel,
     UserCreateModel,
     UserResponseModel,
-    UserUpdatePasswordModel,
 )
 from adapters.database.models.users import User
 from typing import Union
@@ -66,7 +65,7 @@ class SQLAlchemyUserRepository(UserRepository):
             raise DatabaseConnectionException
 
     async def update_password(
-        self, user_id: UUID5, password: UserUpdatePasswordModel.password
+        self, user_id: UUID5, password: str
     ) -> Union[UserResponseModel, None]:
         try:
             query = (

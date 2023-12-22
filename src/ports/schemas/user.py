@@ -12,28 +12,21 @@ class UserBase(BaseModel):
     image: str
 
 
-class UserBaseWithPassword(UserBase):
-    password: constr(min_length=8, max_length=15)
-
-
-class UserCreateModel(UserBaseWithPassword):
+class UserCreateModel(UserBase):
+    password: str
     group_id: UUID5
     role: Role = Role.USER
 
 
-class UserUpdateModel(UserBaseWithPassword):
-    email: Optional[UserBaseWithPassword.email]
-    name: Optional[UserBaseWithPassword.name]
-    surname: Optional[UserBaseWithPassword.surname]
-    phone_number: Optional[UserBaseWithPassword.phone_number]
-    image: Optional[UserBaseWithPassword.image]
-    is_blocked: Optional[UserBaseWithPassword.is_blocked]
+class UserUpdateModel(UserBase):
+    email: Optional[UserBase.email]
+    name: Optional[UserBase.name]
+    surname: Optional[UserBase.surname]
+    phone_number: Optional[UserBase.phone_number]
+    image: Optional[UserBase.image]
+    is_blocked: Optional[UserBase.is_blocked]
     role: Optional[Role]
     group_id: Optional[UUID5]
-
-
-class UserUpdatePasswordModel(BaseModel):
-    password: constr(min_length=8, max_length=15)
 
 
 class UserResponseModel(UserBase):
