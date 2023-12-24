@@ -10,7 +10,7 @@ from src.ports.schemas.user import (
     UserResponseModel,
 )
 from src.adapters.database.models.users import User
-from typing import Union
+from typing import Union, List
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -41,6 +41,15 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
+        except Exception as err:
+            raise DatabaseConnectionException
+
+    async def get_users(self) -> List[UserResponseModel]:
+        try:
+            query = select(User)
+            users = (await self.db_session.execute(query)).all()
+            res = [UserResponseModel(**user.dict()) for user in users]
+            return res
         except Exception as err:
             raise DatabaseConnectionException
 

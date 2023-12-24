@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, List
 
 from ports.schemas.user import (
     UserCreateModel,
@@ -16,6 +16,10 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def get_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
+        pass
+
+    @abstractmethod
+    async def get_users(self) -> List[UserResponseModel]:
         pass
 
     @abstractmethod
