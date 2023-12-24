@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import UUID
 
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
@@ -48,9 +47,7 @@ async def delete_me(db_session: AsyncSession = Depends(get_async_session)):
 
 
 @router.get("/user/{user_id}", response_model=UserResponseModel)
-async def get_user(
-    user_id: UUID, db_session: AsyncSession = Depends(get_async_session)
-):
+async def get_user(user_id: str, db_session: AsyncSession = Depends(get_async_session)):
     db_user = await SQLAlchemyUserRepository(db_session).get_user(user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -59,7 +56,7 @@ async def get_user(
 
 @router.patch("/user/{user_id}", response_model=UserResponseModel)
 async def update_user(
-    user_id: UUID,
+    user_id: str,
     update_data: UserUpdateModel,
     db_session: AsyncSession = Depends(get_async_session),
 ):
