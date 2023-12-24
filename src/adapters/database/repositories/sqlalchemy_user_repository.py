@@ -33,7 +33,7 @@ class SQLAlchemyUserRepository(UserRepository):
             return UserResponseModel(**new_user.dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
 
     async def get_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
@@ -43,7 +43,7 @@ class SQLAlchemyUserRepository(UserRepository):
             if res is not None:
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
 
     async def get_users(
         self,
@@ -76,8 +76,8 @@ class SQLAlchemyUserRepository(UserRepository):
             return res
         except AttributeError:
             raise HTTPException(status_code=400, detail=f"Invalid attributes")
-        except Exception:
-            raise DatabaseConnectionException
+        except Exception as err:
+            raise DatabaseConnectionException(details=str(err))
 
     async def update_user(
         self, user_id: UUID5, user_data: UserUpdateModel
@@ -97,7 +97,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
 
     async def update_password(
         self, user_id: UUID5, password: str
@@ -115,7 +115,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
 
     async def block_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
@@ -131,4 +131,4 @@ class SQLAlchemyUserRepository(UserRepository):
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))

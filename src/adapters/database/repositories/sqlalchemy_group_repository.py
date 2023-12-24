@@ -23,7 +23,7 @@ class SQLAlchemyGroupRepository(GroupRepository):
             return new_group
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
 
     async def get_group(self, group_id: UUID5) -> Union[Group, None]:
         try:
@@ -33,7 +33,7 @@ class SQLAlchemyGroupRepository(GroupRepository):
             if res is not None:
                 return res[0]
         except Exception as err:
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
 
     async def delete_group(self, group_id: UUID5) -> bool:
         try:
@@ -45,4 +45,4 @@ class SQLAlchemyGroupRepository(GroupRepository):
             return True
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise DatabaseConnectionException(details=str(err))
