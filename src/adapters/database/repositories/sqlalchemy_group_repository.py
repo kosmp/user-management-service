@@ -1,7 +1,6 @@
 from sqlalchemy import select, delete
-
+from fastapi import HTTPException
 from src.adapters.database.models.groups import Group
-from src.core.exceptions import DatabaseConnectionException
 from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.group import CreateGroupModel
@@ -23,7 +22,9 @@ class SQLAlchemyGroupRepository(GroupRepository):
             return new_group
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while creating the group"
+            )
 
     async def get_group(self, group_id: UUID5) -> Union[Group, None]:
         try:
@@ -33,7 +34,9 @@ class SQLAlchemyGroupRepository(GroupRepository):
             if res is not None:
                 return res[0]
         except Exception as err:
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while retrieving the group"
+            )
 
     async def delete_group(self, group_id: UUID5) -> bool:
         try:
@@ -45,4 +48,6 @@ class SQLAlchemyGroupRepository(GroupRepository):
             return True
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while deleting the group"
+            )

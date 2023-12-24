@@ -2,7 +2,6 @@ from fastapi import HTTPException
 from pydantic import UUID5
 from sqlalchemy import select, update, asc, desc
 from datetime import datetime, timezone
-from src.core.exceptions import DatabaseConnectionException
 from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.user import (
@@ -33,7 +32,9 @@ class SQLAlchemyUserRepository(UserRepository):
             return UserResponseModel(**new_user.dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while creating the user"
+            )
 
     async def get_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
@@ -43,7 +44,9 @@ class SQLAlchemyUserRepository(UserRepository):
             if res is not None:
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while retrieving the user"
+            )
 
     async def get_users(
         self,
@@ -77,7 +80,9 @@ class SQLAlchemyUserRepository(UserRepository):
         except AttributeError:
             raise HTTPException(status_code=400, detail=f"Invalid attributes")
         except Exception as err:
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while retrieving users"
+            )
 
     async def update_user(
         self, user_id: UUID5, user_data: UserUpdateModel
@@ -97,7 +102,9 @@ class SQLAlchemyUserRepository(UserRepository):
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while updating the user"
+            )
 
     async def update_password(
         self, user_id: UUID5, password: str
@@ -115,7 +122,9 @@ class SQLAlchemyUserRepository(UserRepository):
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while updating the user"
+            )
 
     async def block_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
@@ -131,4 +140,6 @@ class SQLAlchemyUserRepository(UserRepository):
                 return UserResponseModel(**res[0].dict())
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException(details=str(err))
+            raise HTTPException(
+                status_code=500, detail="An error occurred while blocking the user"
+            )
