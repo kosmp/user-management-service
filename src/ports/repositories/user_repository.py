@@ -19,7 +19,9 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_users(self) -> List[UserResponseModel]:
+    async def get_users(
+        self, page: int, limit: int, filter_by_name: str, sort_by: str, order_by: str
+    ) -> List[UserResponseModel]:
         pass
 
     @abstractmethod

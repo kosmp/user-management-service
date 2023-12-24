@@ -1,5 +1,6 @@
+from fastapi import HTTPException
 from pydantic import UUID5
-from sqlalchemy import select, update
+from sqlalchemy import select, update, asc, desc
 from datetime import datetime, timezone
 from src.core.exceptions import DatabaseConnectionException
 from src.ports.repositories.user_repository import UserRepository
@@ -44,13 +45,38 @@ class SQLAlchemyUserRepository(UserRepository):
         except Exception as err:
             raise DatabaseConnectionException
 
-    async def get_users(self) -> List[UserResponseModel]:
+    async def get_users(
+        self,
+        page: int = 1,
+        limit: int = 30,
+        filter_by_name: str = None,
+        sort_by: str = None,
+        order_by: str = "asc",
+    ) -> List[UserResponseModel]:
         try:
+            if page < 1 or limit < 1:
+                raise AttributeError
+
             query = select(User)
+
+            if filter_by_name is not None:
+                query = query.where(User.name.ilike(f"%{filter_by_name}%"))
+
+            if sort_by is not None:
+                column_to_sort = getattr(User, sort_by)
+                if order_by == "asc":
+                    query = query.order_by(asc(column_to_sort))
+                elif order_by == "desc":
+                    query = query.order_by(desc(column_to_sort))
+
+            query = query.limit(limit).offset((page - 1) * limit)
+
             users = (await self.db_session.execute(query)).all()
             res = [UserResponseModel(**user.dict()) for user in users]
             return res
-        except Exception as err:
+        except AttributeError:
+            raise HTTPException(status_code=400, detail=f"Invalid attributes")
+        except Exception:
             raise DatabaseConnectionException
 
     async def update_user(
