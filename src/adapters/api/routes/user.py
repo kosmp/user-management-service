@@ -59,8 +59,15 @@ async def get_user(
 
 @router.patch("/user/{user_id}", response_model=UserResponseModel)
 async def update_user(
-    user_id: int,
+    user_id: UUID,
     update_data: UserUpdateModel,
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    pass
+    result_user = await SQLAlchemyUserRepository(db_session).update_user(
+        user_id, **update_data.model_dump()
+    )
+    if result_user is None:
+        raise HTTPException(
+            status_code=404, detail="User not found. So can't be updated"
+        )
+    return result_user
