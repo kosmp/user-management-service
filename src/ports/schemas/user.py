@@ -60,3 +60,7 @@ class UserUpdateModel(BaseModel):
     is_blocked: Optional[bool]
     role: Optional[Role]
     group_id: Optional[UUID5]
+
+
+class TokenData(BaseModel):
+    user_id: str or None = None
