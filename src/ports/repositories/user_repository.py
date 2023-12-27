@@ -39,3 +39,7 @@ class UserRepository(ABC):
     @abstractmethod
     async def block_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         pass
+
+    @abstractmethod
+    async def delete_user(self, user_id: UUID5) -> Union[UUID5, None]:
+        pass

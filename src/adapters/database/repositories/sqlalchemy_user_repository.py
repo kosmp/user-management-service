@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from pydantic import UUID5
-from sqlalchemy import select, update, asc, desc
+from sqlalchemy import select, update, delete, asc, desc
 from datetime import datetime, timezone
 from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -142,4 +142,17 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.rollback()
             raise HTTPException(
                 status_code=500, detail="An error occurred while blocking the user"
+            )
+
+    async def delete_user(self, user_id: UUID5) -> Union[UUID5, None]:
+        try:
+            query = delete(User).where(User.id == user_id).returning(User.id)
+
+            res = (await self.db_session.execute(query)).fetchone()
+            if res is not None:
+                return res[0]
+        except Exception as err:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=500, detail="An error occurred while deleting the user"
             )
