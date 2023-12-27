@@ -17,6 +17,7 @@ aioboto3 = "12.1.0"
 pyjwt = "2.8.0"
 pydantic = {extras = ["email"]}
 passlib = "1.7.4"
+jose = "1.0.0"
 
 [dev-packages]
 black = "23.11.0"
