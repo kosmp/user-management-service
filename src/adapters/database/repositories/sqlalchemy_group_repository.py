@@ -38,14 +38,13 @@ class SQLAlchemyGroupRepository(GroupRepository):
                 status_code=500, detail="An error occurred while retrieving the group"
             )
 
-    async def delete_group(self, group_id: UUID5) -> bool:
+    async def delete_group(self, group_id: UUID5) -> Union[UUID5, None]:
         try:
-            query = delete(Group).where(Group.id == group_id)
+            query = delete(Group).where(Group.id == group_id).returning(Group.id)
             res = (await self.db_session.execute(query)).fetchone()
 
-            if res is None:
-                return False
-            return True
+            if res is not None:
+                return res[0]
         except Exception as err:
             await self.db_session.rollback()
             raise HTTPException(

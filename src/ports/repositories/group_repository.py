@@ -15,5 +15,5 @@ class GroupRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_group(self, group_id: UUID5) -> Union[Group, None]:
+    async def delete_group(self, group_id: UUID5) -> Union[UUID5, None]:
         pass
