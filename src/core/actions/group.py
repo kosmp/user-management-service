@@ -12,7 +12,7 @@ async def create_db_group(
     db_group = await SQLAlchemyGroupRepository(db_session).create_group(group_name)
 
     if db_group is None:
-        raise HTTPException(status_code=404, detail="Group not found")
+        raise HTTPException(status_code=500, detail="Group wasn't created")
     return db_group
 
 
