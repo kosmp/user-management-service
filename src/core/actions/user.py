@@ -36,3 +36,12 @@ async def block_db_user(user_id: str, db_session: AsyncSession) -> UserResponseM
             status_code=404, detail="User not found. So can't be blocked"
         )
     return result_user
+
+
+async def delete_db_user(user_id: str, db_session: AsyncSession) -> str:
+    deleted_user_id = await SQLAlchemyUserRepository(db_session).delete_user(user_id)
+
+    if deleted_user_id is None:
+        raise HTTPException(status_code=404, detail="User not found for deletion")
+
+    return deleted_user_id

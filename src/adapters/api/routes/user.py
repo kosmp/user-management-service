@@ -10,7 +10,12 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import get_token_data
-from src.core.actions.user import get_updated_db_user, get_db_user, block_db_user
+from src.core.actions.user import (
+    get_updated_db_user,
+    get_db_user,
+    block_db_user,
+    delete_db_user,
+)
 
 router = APIRouter()
 
@@ -59,19 +64,14 @@ async def update_me(
     return await get_updated_db_user(user_id, update_data, db_session)
 
 
-@router.delete("/user/me", response_model=UserResponseModel)
+@router.delete("/user/me", response_model=str)
 async def delete_me(
     token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
 ):
     user_id = get_token_data(token).user_id
 
-    deleted_user_id = await SQLAlchemyUserRepository(db_session).delete_user(user_id)
-
-    if deleted_user_id is None:
-        raise HTTPException(status_code=404, detail="User not found for deletion")
-
-    return deleted_user_id
+    return await delete_db_user(user_id, db_session)
 
 
 @router.get("/user/{user_id}", response_model=UserResponseModel)
