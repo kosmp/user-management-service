@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, constr, UUID5, EmailStr, field_validator, Field
 from src.ports.enums import Role
 from typing import Optional
@@ -49,6 +51,7 @@ class UserResponseModel(UserBase):
     id: UUID5
     group_id: UUID5
     role: Role
+    created_at: datetime
 
 
 class UserUpdateModel(BaseModel):
