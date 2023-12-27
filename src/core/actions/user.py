@@ -26,3 +26,13 @@ async def get_db_user(user_id: str, db_session: AsyncSession) -> UserResponseMod
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
+
+
+async def block_db_user(user_id: str, db_session: AsyncSession) -> UserResponseModel:
+    result_user = await SQLAlchemyUserRepository(db_session).block_user(user_id)
+
+    if result_user is None:
+        raise HTTPException(
+            status_code=404, detail="User not found. So can't be blocked"
+        )
+    return result_user
