@@ -10,7 +10,7 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import get_token_data
-from src.core.actions.user import get_updated_db_user, get_db_user
+from src.core.actions.user import get_updated_db_user, get_db_user, block_db_user
 
 router = APIRouter()
 
@@ -79,10 +79,18 @@ async def get_user(user_id: str, db_session: AsyncSession = Depends(get_async_se
     return await get_db_user(user_id, db_session)
 
 
-@router.patch("/user/{user_id}", response_model=UserResponseModel)
+@router.patch("/user/{user_id}/update", response_model=UserResponseModel)
 async def update_user(
     user_id: str,
     update_data: UserUpdateModel,
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await get_updated_db_user(user_id, update_data, db_session)
+
+
+@router.patch("/user/{user_id}/block", response_model=UserResponseModel)
+async def block_user(
+    user_id: str,
+    db_session: AsyncSession = Depends(get_async_session),
+):
+    return await block_db_user(user_id, db_session)
