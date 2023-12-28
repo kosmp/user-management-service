@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from pydantic import EmailStr
 from src.ports.schemas.user import SignUpModel, UserResponseModel, CredentialsModel
 
 router = APIRouter()
@@ -11,7 +10,7 @@ async def signup(user_data: SignUpModel):
 
 
 @router.post("/auth/login")
-async def login(email: EmailStr):
+async def login(credentials: CredentialsModel):
     pass
 
 
