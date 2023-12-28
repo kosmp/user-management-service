@@ -15,7 +15,7 @@ aioredis = "2.0.1"
 boto3 = "1.33.1"
 aioboto3 = "12.1.0"
 pyjwt = "2.8.0"
-pydantic = {extras = ["email"]}
+pydantic = {version = "==2.5.3", extras = ["email"]}
 passlib = "1.7.4"
 jose = "1.0.0"
 
