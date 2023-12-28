@@ -34,13 +34,9 @@ async def get_users(
     order_by: str = "asc",
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    db_users = await SQLAlchemyUserRepository(db_session).get_users(
+    return await SQLAlchemyUserRepository(db_session).get_users(
         page, limit, filter_by_name, sort_by, order_by
     )
-
-    if len(db_users) == 0:
-        raise HTTPException(status_code=404, detail="Users not found")
-    return db_users
 
 
 @router.get("/user/me", response_model=UserResponseModel)
