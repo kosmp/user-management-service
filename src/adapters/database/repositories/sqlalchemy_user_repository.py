@@ -78,7 +78,7 @@ class SQLAlchemyUserRepository(UserRepository):
             res = [UserResponseModel(**user.dict()) for user in users]
             return res
         except AttributeError:
-            raise HTTPException(status_code=400, detail=f"Invalid attributes")
+            raise HTTPException(status_code=422, detail=f"Invalid attributes")
         except Exception as err:
             raise HTTPException(
                 status_code=500, detail="An error occurred while retrieving users"
