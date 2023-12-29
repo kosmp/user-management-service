@@ -57,9 +57,6 @@ class SQLAlchemyUserRepository(UserRepository):
         order_by: str = "asc",
     ) -> List[UserResponseModel]:
         try:
-            if page < 1 or limit < 1:
-                raise AttributeError
-
             query = select(User)
 
             if filter_by_name is not None:
