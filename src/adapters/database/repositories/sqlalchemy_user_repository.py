@@ -1,16 +1,25 @@
+from fastapi import HTTPException, status
 from pydantic import UUID5
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete, asc, desc
 from datetime import datetime, timezone
-from app.exceptions import DatabaseConnectionException
-from ports.repositories.user_repository import UserRepository
+
+from sqlalchemy.exc import (
+    IntegrityError,
+    OperationalError,
+    InvalidRequestError,
+    NoResultFound,
+)
+
+from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ports.schemas.user import (
+from src.ports.schemas.user import (
     UserUpdateModel,
     UserCreateModel,
     UserResponseModel,
 )
-from adapters.database.models.users import User
-from typing import Union
+from src.adapters.database.models.users import User
+from src.core.exceptions import DatabaseException, InvalidRequestException
+from typing import Union, List
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -30,9 +39,24 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.commit()
 
             return UserResponseModel(**new_user.dict())
-        except Exception as err:
+        except IntegrityError as integrity_err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Group with email '{user_data.email}' already exists.",
+            )
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
+        except Exception as generic_err:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred while creating the user.",
+            )
 
     async def get_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
@@ -41,8 +65,66 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except NoResultFound:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
+        except Exception as generic_err:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while retrieving the user.",
+            )
+
+    async def get_users(
+        self,
+        page: int = 1,
+        limit: int = 30,
+        filter_by_name: str = None,
+        sort_by: str = None,
+        order_by: str = "asc",
+    ) -> List[UserResponseModel]:
+        try:
+            query = select(User)
+
+            if filter_by_name is not None:
+                query = query.where(User.name.ilike(f"%{filter_by_name}%"))
+
+            if sort_by is not None:
+                column_to_sort = getattr(User, sort_by)
+                if order_by == "asc":
+                    query = query.order_by(asc(column_to_sort))
+                elif order_by == "desc":
+                    query = query.order_by(desc(column_to_sort))
+
+            query = query.limit(limit).offset((page - 1) * limit)
+
+            users = (await self.db_session.execute(query)).all()
+            res = [UserResponseModel(**user.dict()) for user in users]
+            return res
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except AttributeError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid attributes.",
+            )
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
         except Exception as err:
-            raise DatabaseConnectionException
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while retrieving users.",
+            )
 
     async def update_user(
         self, user_id: UUID5, user_data: UserUpdateModel
@@ -60,9 +142,18 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while updating the user.",
+            )
 
     async def update_password(
         self, user_id: UUID5, password: str
@@ -78,9 +169,18 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while updating the user.",
+            )
 
     async def block_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
         try:
@@ -94,6 +194,41 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
         except Exception as err:
             await self.db_session.rollback()
-            raise DatabaseConnectionException
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while blocking the user.",
+            )
+
+    async def delete_user(self, user_id: UUID5) -> Union[UUID5, None]:
+        try:
+            query = delete(User).where(User.id == user_id).returning(User.id)
+
+            res = (await self.db_session.execute(query)).fetchone()
+            if res is not None:
+                return res[0]
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except NoResultFound:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestError
+        except Exception as err:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while deleting the user.",
+            )

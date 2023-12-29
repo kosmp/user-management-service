@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from ports.schemas.group import CreateGroupModel
+from src.ports.schemas.group import CreateGroupModel
 from pydantic import UUID5
-from adapters.database.models.groups import Group
+from src.adapters.database.models.groups import Group
 from typing import Union
 
 
@@ -15,5 +15,5 @@ class GroupRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_group(self, group_id: UUID5) -> Union[Group, None]:
+    async def delete_group(self, group_id: UUID5) -> Union[UUID5, None]:
         pass
