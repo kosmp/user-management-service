@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Query
-from fastapi.security import OAuth2PasswordBearer
 from typing import List
 
 from pydantic import UUID5
@@ -17,13 +16,9 @@ from src.core.actions.user import (
     block_db_user,
     delete_db_user,
 )
+from src.core import oauth2_scheme
 
 router = APIRouter()
-
-# here only for development
-SECRET_KEY = "test_key"
-ALGORITHM = "HS256"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.get("/users", response_model=List[UserResponseModel])
