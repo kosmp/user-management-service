@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
 from fastapi.security import OAuth2PasswordBearer
 from typing import List
 
@@ -27,11 +27,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @router.get("/users", response_model=List[UserResponseModel])
 async def get_users(
-    page: int = 1,
-    limit: int = 30,
+    page: int = Query(1, ge=1),
+    limit: int = Query(30, ge=1, le=100),
     filter_by_name: str = None,
     sort_by: str = None,
-    order_by: str = "asc",
+    order_by: str = Query("asc", regex="^(asc|desc)$"),
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await SQLAlchemyUserRepository(db_session).get_users(
