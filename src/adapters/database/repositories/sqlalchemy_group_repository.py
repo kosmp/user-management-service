@@ -1,9 +1,17 @@
 from sqlalchemy import select, delete
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+from sqlalchemy.exc import (
+    IntegrityError,
+    OperationalError,
+    InvalidRequestError,
+    NoResultFound,
+)
+
 from src.adapters.database.models.groups import Group
 from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.group import CreateGroupModel
+from src.core.exceptions import DatabaseException, InvalidRequestException
 from pydantic import UUID5
 from typing import Union
 
@@ -20,10 +28,23 @@ class SQLAlchemyGroupRepository(GroupRepository):
             await self.db_session.commit()
 
             return new_group
-        except Exception as err:
+        except IntegrityError as integrity_err:
             await self.db_session.rollback()
             raise HTTPException(
-                status_code=500, detail="An error occurred while creating the group"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Group with name '{group_name}' already exists.",
+            )
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
+        except Exception as generic_err:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred while creating the group.",
             )
 
     async def get_group(self, group_id: UUID5) -> Union[Group, None]:
@@ -33,9 +54,22 @@ class SQLAlchemyGroupRepository(GroupRepository):
 
             if res is not None:
                 return res[0]
-        except Exception as err:
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except NoResultFound:
+            await self.db_session.rollback()
             raise HTTPException(
-                status_code=500, detail="An error occurred while retrieving the group"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Group not found.",
+            )
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestException
+        except Exception as generic_err:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while retrieving the group.",
             )
 
     async def delete_group(self, group_id: UUID5) -> Union[UUID5, None]:
@@ -45,8 +79,26 @@ class SQLAlchemyGroupRepository(GroupRepository):
 
             if res is not None:
                 return res[0]
+        except IntegrityError as int_err:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot delete the group due to integrity constraints.",
+            )
+        except OperationalError as op_err:
+            await self.db_session.rollback()
+            raise DatabaseException
+        except NoResultFound:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Group not found.",
+            )
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            raise InvalidRequestError
         except Exception as err:
             await self.db_session.rollback()
             raise HTTPException(
-                status_code=500, detail="An error occurred while deleting the group"
+                status_code=500, detail="An error occurred while deleting the group."
             )
