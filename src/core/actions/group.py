@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from pydantic import UUID5
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.group import GroupResponseModel, CreateGroupModel
 from src.adapters.database.repositories.sqlalchemy_group_repository import (
@@ -16,7 +17,7 @@ async def create_db_group(
     return db_group
 
 
-async def get_db_group(group_id: str, db_session: AsyncSession) -> GroupResponseModel:
+async def get_db_group(group_id: UUID5, db_session: AsyncSession) -> GroupResponseModel:
     db_group = await SQLAlchemyGroupRepository(db_session).get_group(group_id)
 
     if db_group is None:
@@ -24,7 +25,7 @@ async def get_db_group(group_id: str, db_session: AsyncSession) -> GroupResponse
     return db_group
 
 
-async def delete_db_group(group_id: str, db_session: AsyncSession) -> str:
+async def delete_db_group(group_id: UUID5, db_session: AsyncSession) -> UUID5:
     deleted_group_id = await SQLAlchemyGroupRepository(db_session).delete_group(
         group_id
     )

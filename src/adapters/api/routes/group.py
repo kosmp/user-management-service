@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends
+from pydantic import UUID5
+
 from src.ports.schemas.group import GroupResponseModel, CreateGroupModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.database_settings import get_async_session
@@ -17,13 +19,13 @@ async def create_group(
 
 @router.get("/group/{group_id}", response_model=GroupResponseModel)
 async def get_group(
-    group_id: str, db_session: AsyncSession = Depends(get_async_session)
+    group_id: UUID5, db_session: AsyncSession = Depends(get_async_session)
 ):
     return await get_db_group(group_id, db_session)
 
 
 @router.delete("/group/{group_id}", response_model=str)
 async def delete_group(
-    group_id: str, db_session: AsyncSession = Depends(get_async_session)
+    group_id: UUID5, db_session: AsyncSession = Depends(get_async_session)
 ):
     return await delete_db_group(group_id, db_session)

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, constr, UUID5, EmailStr, field_validator, Field
+from pydantic import BaseModel, constr, UUID5, EmailStr, field_validator
 from src.ports.enums import Role
 from typing import Optional
 
@@ -66,4 +66,4 @@ class UserUpdateModel(BaseModel):
 
 
 class TokenData(BaseModel):
-    user_id: str or None = None
+    user_id: UUID5 or None = None
