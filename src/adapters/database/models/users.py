@@ -20,7 +20,7 @@ class User(Base):
     name = mapped_column(String(15), nullable=True)
     surname = mapped_column(String(15), nullable=True)
     phone_number = mapped_column(String(15), nullable=True)
-    email = mapped_column(String, nullable=False)
+    email = mapped_column(String, nullable=False, unique=True)
     role = mapped_column(
         Enum(Role, name="role_enum", native_enum=False),
         nullable=False,
