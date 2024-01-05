@@ -12,7 +12,7 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
 from src.core.services.token import get_token_data
 from src.core.actions.user import (
     get_updated_db_user,
-    get_db_user,
+    get_db_user_by_id,
     block_db_user,
     delete_db_user,
 )
@@ -42,7 +42,7 @@ async def get_me(
 ):
     token_data = get_token_data(token)
 
-    return await get_db_user(token_data.user_id, db_session)
+    return await get_db_user_by_id(token_data.user_id, db_session)
 
 
 @router.patch("/user/me", response_model=UserResponseModel)
@@ -70,7 +70,7 @@ async def delete_me(
 async def get_user(
     user_id: UUID5, db_session: AsyncSession = Depends(get_async_session)
 ):
-    return await get_db_user(user_id, db_session)
+    return await get_db_user_by_id(user_id, db_session)
 
 
 @router.patch("/user/{user_id}/update", response_model=UserResponseModel)
