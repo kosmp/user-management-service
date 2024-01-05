@@ -6,7 +6,7 @@ from ports.schemas.user import (
     UserUpdateModel,
     UserResponseModel,
 )
-from pydantic import UUID5
+from pydantic import UUID5, EmailStr
 
 
 class UserRepository(ABC):
@@ -15,7 +15,7 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
+    async def get_user(self, **kwargs) -> Union[UserResponseModel, None]:
         pass
 
     @abstractmethod
