@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from pydantic import BaseModel, constr, UUID5, EmailStr, field_validator
+
+from ports.schemas.group import GroupNameType
 from src.ports.enums import Role
 from typing import Optional
 
@@ -22,7 +24,8 @@ class UserCreateModel(UserBase):
 
 class SignUpModel(UserBase):
     password: constr(min_length=8)
-    group_id: UUID5
+    group_id: Optional[UUID5] = None
+    group_name: Optional[GroupNameType] = None
     role: Role = Role.USER
 
     @field_validator("password")
@@ -66,4 +69,4 @@ class UserUpdateModel(BaseModel):
 
 
 class TokenData(BaseModel):
-    user_id: UUID5 or None = None
+    user_id: Optional[UUID5] = None
