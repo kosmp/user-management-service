@@ -6,7 +6,7 @@ from ports.schemas.user import (
     UserUpdateModel,
     UserResponseModel,
 )
-from pydantic import UUID5, EmailStr
+from pydantic import UUID5
 
 
 class UserRepository(ABC):

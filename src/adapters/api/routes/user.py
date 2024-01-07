@@ -4,19 +4,20 @@ from typing import List
 from pydantic import UUID5
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core import oauth2_scheme
+from core.services.token import get_token_payload
+from core.services.user import get_current_user_from_token
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
-from src.core.services.token import get_token_data
 from src.core.actions.user import (
     get_updated_db_user,
     get_db_user_by_id,
     block_db_user,
     delete_db_user,
 )
-from src.core import oauth2_scheme
 
 router = APIRouter()
 
@@ -37,12 +38,9 @@ async def get_users(
 
 @router.get("/user/me", response_model=UserResponseModel)
 async def get_me(
-    token: str = Depends(oauth2_scheme),
-    db_session: AsyncSession = Depends(get_async_session),
+    current_user: UserResponseModel = Depends(get_current_user_from_token),
 ):
-    token_data = get_token_data(token)
-
-    return await get_db_user_by_id(token_data.user_id, db_session)
+    return current_user
 
 
 @router.patch("/user/me", response_model=UserResponseModel)
@@ -51,7 +49,7 @@ async def update_me(
     token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    user_id = get_token_data(token).user_id
+    user_id = get_token_payload(token).user_id
 
     return await get_updated_db_user(user_id, update_data, db_session)
 
@@ -61,7 +59,7 @@ async def delete_me(
     token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    user_id = get_token_data(token).user_id
+    user_id = get_token_payload(token).user_id
 
     return await delete_db_user(user_id, db_session)
 
