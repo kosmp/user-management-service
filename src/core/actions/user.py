@@ -1,10 +1,17 @@
 from pydantic import UUID5, EmailStr
 
-from src.ports.schemas.user import UserResponseModel, UserUpdateModel
+from src.ports.schemas.user import UserResponseModel, UserUpdateModel, SignUpModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
+from src.ports.schemas.user import UserCreateModel
+
+
+async def create_db_user(
+    user_data: UserCreateModel, db_session: AsyncSession
+) -> UserResponseModel:
+    return await SQLAlchemyUserRepository(db_session).create_new_user(user_data)
 
 
 async def get_updated_db_user(
