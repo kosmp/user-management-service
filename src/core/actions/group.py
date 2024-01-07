@@ -1,14 +1,13 @@
-from fastapi import HTTPException
 from pydantic import UUID5
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.ports.schemas.group import GroupResponseModel, CreateGroupModel
+from src.ports.schemas.group import GroupResponseModel, CreateGroupModel, GroupNameType
 from src.adapters.database.repositories.sqlalchemy_group_repository import (
     SQLAlchemyGroupRepository,
 )
 
 
 async def create_db_group(
-    group_name: CreateGroupModel.group_name, db_session: AsyncSession
+    group_name: GroupNameType, db_session: AsyncSession
 ) -> GroupResponseModel:
     return await SQLAlchemyGroupRepository(db_session).create_group(group_name)
 

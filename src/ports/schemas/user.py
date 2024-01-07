@@ -26,7 +26,7 @@ class SignUpModel(UserBase):
     role: Role = Role.USER
 
     @field_validator("password")
-    def validate_password(self, value):
+    def validate_password(cls, value):
         if not any(c.isalpha() for c in value):
             raise ValueError("Password must contain at least one letter")
         if not any(c.isdigit() for c in value):
@@ -39,7 +39,7 @@ class CredentialsModel(BaseModel):
     password: constr(min_length=8)
 
     @field_validator("password")
-    def validate_password(self, value):
+    def validate_password(cls, value):
         if not any(c.isalpha() for c in value):
             raise ValueError("Password must contain at least one letter")
         if not any(c.isdigit() for c in value):

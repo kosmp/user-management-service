@@ -10,7 +10,7 @@ from sqlalchemy.exc import (
 from src.adapters.database.models.groups import Group
 from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.ports.schemas.group import CreateGroupModel
+from src.ports.schemas.group import CreateGroupModel, GroupNameType
 from src.core.exceptions import DatabaseException, InvalidRequestException
 from pydantic import UUID5
 from typing import Union
@@ -20,7 +20,7 @@ class SQLAlchemyGroupRepository(GroupRepository):
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
-    async def create_group(self, group_name: CreateGroupModel.group_name) -> Group:
+    async def create_group(self, group_name: GroupNameType) -> Group:
         try:
             new_group = Group(name=group_name)
 
