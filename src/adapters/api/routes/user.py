@@ -4,9 +4,9 @@ from typing import List
 from pydantic import UUID5
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core import oauth2_scheme
-from core.services.token import get_token_payload
-from core.services.user import get_current_user_from_token
+from src.core import oauth2_scheme
+from src.core.services.token import get_token_payload
+from src.core.services.user import get_current_user_from_token
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (

@@ -1,12 +1,12 @@
 from typing import Union
 
-from adapters.database.database_settings import get_async_session
-from adapters.database.repositories.sqlalchemy_user_repository import (
+from src.adapters.database.database_settings import get_async_session
+from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
-from core import oauth2_scheme
-from core.exceptions import CredentialsException
-from core.services.token import get_token_payload
+from src.core import oauth2_scheme
+from src.core.exceptions import CredentialsException
+from src.core.services.token import get_token_payload
 from src.ports.schemas.user import (
     CredentialsModel,
     UserResponseModel,

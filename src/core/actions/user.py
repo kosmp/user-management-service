@@ -3,12 +3,12 @@ from datetime import timedelta
 from fastapi import HTTPException, status, Depends
 from pydantic import UUID5, EmailStr
 
-from adapters.database.database_settings import get_async_session
-from core import settings
-from core.actions.group import get_db_group, create_db_group
-from core.services.hasher import PasswordHasher
-from core.services.token import generate_token
-from core.services.user import authenticate_user
+from src.adapters.database.database_settings import get_async_session
+from src.core import settings
+from src.core.actions.group import get_db_group, create_db_group
+from src.core.services.hasher import PasswordHasher
+from src.core.services.token import generate_token
+from src.core.services.user import authenticate_user
 from src.ports.schemas.user import (
     UserResponseModel,
     UserUpdateModel,

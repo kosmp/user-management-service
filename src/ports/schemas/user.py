@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, constr, UUID5, EmailStr, field_validator
 
-from ports.schemas.group import GroupNameType
+from src.ports.schemas.group import GroupNameType
 from src.ports.enums import Role
 from typing import Optional
 

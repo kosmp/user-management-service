@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.actions.user import create_user, login_user
+from src.core.actions.user import create_user, login_user
 from src.ports.schemas.user import SignUpModel, UserResponseModel, CredentialsModel
 from src.adapters.database.database_settings import get_async_session
 from src.core import oauth2_scheme

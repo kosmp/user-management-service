@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Union, List
 
-from ports.schemas.user import (
+from src.ports.schemas.user import (
     UserCreateModel,
     UserUpdateModel,
     UserResponseModel,
