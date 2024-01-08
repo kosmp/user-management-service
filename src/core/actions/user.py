@@ -1,19 +1,15 @@
-from datetime import timedelta
-
 from fastapi import HTTPException, status, Depends
 from pydantic import UUID5, EmailStr
 
 from src.adapters.database.database_settings import get_async_session
-from src.core import settings
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
-from src.core.services.token import generate_token
+from src.core.services.token import get_token_payload
 from src.core.services.user import authenticate_user
 from src.ports.schemas.user import (
     UserResponseModel,
     UserUpdateModel,
     CredentialsModel,
-    TokenData,
     SignUpModel,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +17,8 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.ports.schemas.user import UserCreateModel
+from src.core.services.token import generate_tokens
+from src.adapters.database.redis_connection import redis_client
 
 
 async def create_user(
@@ -75,21 +73,7 @@ async def login_user(
             detail="Incorrect username or password",
         )
 
-    access_token = generate_token(
-        data=TokenData(user_id=user.id),
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
-    )
-
-    refresh_token = generate_token(
-        data=TokenData(user_id=user.id),
-        expires_delta=timedelta(minutes=settings.refresh_token_expire_minutes),
-    )
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return generate_tokens({"user_id": user.id})
 
 
 async def get_updated_db_user(
@@ -118,3 +102,15 @@ async def block_db_user(user_id: UUID5, db_session: AsyncSession) -> UserRespons
 
 async def delete_db_user(user_id: UUID5, db_session: AsyncSession) -> UUID5:
     return await SQLAlchemyUserRepository(db_session).delete_user(user_id)
+
+
+async def get_refresh_token(refresh_token, db_session: AsyncSession) -> dict:
+    token_payload = get_token_payload(refresh_token)
+
+    # check if user with user_id exists
+    await get_db_user_by_id(user_id=token_payload.user_id, db_session=db_session)
+
+    if await redis_client.exists(token_payload.user_id):
+        redis_client.delete(token_payload.user_id)
+
+    return generate_tokens(token_payload.model_dump())
