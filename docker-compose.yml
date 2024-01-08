@@ -1,8 +1,31 @@
 services:
+  app-db:
+    image: postgres:15
+    container_name: app-pg
+    restart: always
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+  app-redis:
+    image: redis:7
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: ${REDIS_PORT}
   app:
+    platform: linux/x86-64
+    container_name: app
     build: .
     ports:
       - "8000:8000"
     volumes:
       - .:/home/appuser
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload"]
+    environment:
+      - API_ENVIRONMENT=${API_ENVIRONMENT}
+    depends_on:
+      - app-db
+      - app-redis
