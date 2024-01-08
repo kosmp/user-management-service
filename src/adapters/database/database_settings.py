@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from typing import AsyncGenerator
 
+from core.exceptions import DatabaseException
 from src.core import settings
 
 Base = declarative_base()
@@ -21,8 +22,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     try:
         async with async_session() as session:
             yield session
-    except:
+    except Exception:
         await session.rollback()
-        raise
+        raise DatabaseException
     finally:
         await session.close()

@@ -24,7 +24,7 @@ from src.adapters.database.redis_connection import redis_client
 async def create_user(
     user_data: SignUpModel, db_session: AsyncSession
 ) -> UserResponseModel:
-    user_exists = get_db_user_by_email(user_data.email, db_session=db_session)
+    user_exists = await get_db_user_by_email(user_data.email, db_session=db_session)
     if user_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email is already exists"

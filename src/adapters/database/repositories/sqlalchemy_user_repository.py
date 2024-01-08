@@ -1,11 +1,11 @@
 from fastapi import HTTPException, status
 from pydantic import UUID5
-from sqlalchemy import select, update, delete, asc, desc
+from sqlalchemy import select, update, delete, asc, desc, UUID
 from datetime import datetime, timezone
 
 from sqlalchemy.exc import (
     IntegrityError,
-    OperationalError,
+    DatabaseError,
     InvalidRequestError,
     NoResultFound,
 )
@@ -20,7 +20,6 @@ from src.ports.schemas.user import (
 from src.adapters.database.models.users import User
 from src.core.exceptions import DatabaseException, InvalidRequestException
 from typing import Union, List
-from pydantic import EmailStr
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -46,7 +45,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Group with email '{user_data.email}' already exists.",
             )
-        except OperationalError as op_err:
+        except DatabaseError as db_err:
             await self.db_session.rollback()
             raise DatabaseException
         except InvalidRequestError as inv_req_err:
@@ -65,9 +64,9 @@ class SQLAlchemyUserRepository(UserRepository):
             email = kwargs.get("email")
 
             if user_id:
-                query = select(User).where(User.id == user_id)
+                query = select(User).where(User.id == UUID(user_id))
             elif email:
-                query = select(User).where(User.email == email)
+                query = select(User).where(User.email == str(email))
             else:
                 raise InvalidRequestError
 
@@ -75,9 +74,6 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
-        except OperationalError as op_err:
-            await self.db_session.rollback()
-            raise DatabaseException
         except NoResultFound:
             await self.db_session.rollback()
             raise HTTPException(
@@ -119,9 +115,6 @@ class SQLAlchemyUserRepository(UserRepository):
             users = (await self.db_session.execute(query)).all()
             res = [UserResponseModel(**user.dict()) for user in users]
             return res
-        except OperationalError as op_err:
-            await self.db_session.rollback()
-            raise DatabaseException
         except AttributeError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -152,9 +145,6 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
-        except OperationalError as op_err:
-            await self.db_session.rollback()
-            raise DatabaseException
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -171,7 +161,7 @@ class SQLAlchemyUserRepository(UserRepository):
         try:
             query = (
                 update(User)
-                .where(User.id == user_id)
+                .where(User.id == str(user_id))
                 .values(password, modified_at=datetime.now(timezone.utc))
                 .returning(User.id)
             )
@@ -179,9 +169,6 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
-        except OperationalError as op_err:
-            await self.db_session.rollback()
-            raise DatabaseException
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -196,7 +183,7 @@ class SQLAlchemyUserRepository(UserRepository):
         try:
             query = (
                 update(User)
-                .where(User.id == user_id)
+                .where(User.id == str(user_id))
                 .values(is_blocked=True)
                 .returning(User.id)
             )
@@ -204,9 +191,6 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return UserResponseModel(**res[0].dict())
-        except OperationalError as op_err:
-            await self.db_session.rollback()
-            raise DatabaseException
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -219,14 +203,11 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def delete_user(self, user_id: UUID5) -> Union[UUID5, None]:
         try:
-            query = delete(User).where(User.id == user_id).returning(User.id)
+            query = delete(User).where(User.id == str(user_id)).returning(User.id)
 
             res = (await self.db_session.execute(query)).fetchone()
             if res is not None:
                 return res[0]
-        except OperationalError as op_err:
-            await self.db_session.rollback()
-            raise DatabaseException
         except NoResultFound:
             await self.db_session.rollback()
             raise HTTPException(
