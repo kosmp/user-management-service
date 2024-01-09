@@ -61,21 +61,10 @@ class SQLAlchemyUserRepository(UserRepository):
             else:
                 raise InvalidRequestError
 
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
 
             if res is not None:
-                return UserResponseModel(
-                    id=res[0].id,
-                    email=res[0].email,
-                    name=res[0].name,
-                    surname=res[0].surname,
-                    phone_number=res[0].phone_number,
-                    is_blocked=res[0].is_blocked,
-                    image=res[0].image,
-                    group_id=res[0].group_id,
-                    role=res[0].role,
-                    created_at=res[0].created_at,
-                )
+                return res
             else:
                 raise NoResultFound
         except NoResultFound:
@@ -116,22 +105,8 @@ class SQLAlchemyUserRepository(UserRepository):
 
             query = query.limit(limit).offset((page - 1) * limit)
 
-            users = (await self.db_session.execute(query)).fetchall()
-            res = [
-                UserResponseModel(
-                    id=user[0].id,
-                    email=user[0].email,
-                    name=user[0].name,
-                    surname=user[0].surname,
-                    phone_number=user[0].phone_number,
-                    is_blocked=user[0].is_blocked,
-                    image=user[0].image,
-                    group_id=user[0].group_id,
-                    role=user[0].role,
-                    created_at=user[0].created_at,
-                )
-                for user in users
-            ]
+            users = await self.db_session.scalars(query)
+            res = [user for user in users]
             return res
         except AttributeError as attr_err:
             raise HTTPException(
