@@ -55,6 +55,7 @@ class UserResponseModel(UserBase):
     group_id: UUID4
     role: Role
     created_at: datetime
+    modified_at: Optional[datetime] = None
 
 
 class UserUpdateModel(BaseModel):

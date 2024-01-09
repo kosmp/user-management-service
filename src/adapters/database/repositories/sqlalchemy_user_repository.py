@@ -129,9 +129,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(
-                    **user_data.model_dump(), modified_at=datetime.now(timezone.utc)
-                )
+                .values(**user_data.model_dump(), modified_at=datetime.utcnow())
                 .returning(User.id)
             )
             res = await self.db_session.scalar(query)
@@ -155,7 +153,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(password, modified_at=datetime.now(timezone.utc))
+                .values(password, modified_at=datetime.utcnow())
                 .returning(User.id)
             )
             res = await self.db_session.scalar(query)
@@ -177,7 +175,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(is_blocked=True)
+                .values(is_blocked=True, modified_at=datetime.utcnow())
                 .returning(User)
             )
             res = await self.db_session.execute(query)
