@@ -128,16 +128,16 @@ class SQLAlchemyUserRepository(UserRepository):
         try:
             query = (
                 update(User)
-                .where(User.id == user_id)
+                .where(User.id == str(user_id))
                 .values(
                     **user_data.model_dump(), modified_at=datetime.now(timezone.utc)
                 )
                 .returning(User.id)
             )
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
 
             if res is not None:
-                return UserResponseModel(**res[0].dict())
+                return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -158,10 +158,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(password, modified_at=datetime.now(timezone.utc))
                 .returning(User.id)
             )
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
 
             if res is not None:
-                return UserResponseModel(**res[0].dict())
+                return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -180,10 +180,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(is_blocked=True)
                 .returning(User.id)
             )
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
 
             if res is not None:
-                return UserResponseModel(**res[0].dict())
+                return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -198,9 +198,9 @@ class SQLAlchemyUserRepository(UserRepository):
         try:
             query = delete(User).where(User.id == str(user_id)).returning(User.id)
 
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
             if res is not None:
-                return res[0]
+                return res
         except NoResultFound:
             await self.db_session.rollback()
             raise HTTPException(

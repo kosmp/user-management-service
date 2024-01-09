@@ -47,12 +47,10 @@ class SQLAlchemyGroupRepository(GroupRepository):
     async def get_group(self, group_id: UUID4) -> Union[Group, None]:
         try:
             query = select(Group).where(Group.id == str(group_id))
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
 
             if res is not None:
-                return Group(
-                    id=res[0].id, name=res[0].name, created_at=res[0].created_at
-                )
+                return Group(id=res.id, name=res.name, created_at=res.created_at)
             else:
                 raise NoResultFound
         except NoResultFound:
@@ -73,10 +71,10 @@ class SQLAlchemyGroupRepository(GroupRepository):
     async def delete_group(self, group_id: UUID4) -> Union[UUID4, None]:
         try:
             query = delete(Group).where(Group.id == UUID(group_id)).returning(Group.id)
-            res = (await self.db_session.execute(query)).fetchone()
+            res = await self.db_session.scalar(query)
 
             if res is not None:
-                return res[0]
+                return res
         except IntegrityError as int_err:
             await self.db_session.rollback()
             raise HTTPException(
