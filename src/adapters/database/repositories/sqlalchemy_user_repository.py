@@ -27,7 +27,9 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def create_user(self, user_data: UserCreateModel) -> UserResponseModel:
         try:
-            new_user = User(**user_data.model_dump())
+            new_user = User(
+                **user_data.model_dump(exclude_none=True, exclude_unset=True)
+            )
 
             self.db_session.add(new_user)
             await self.db_session.commit()
@@ -129,10 +131,14 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(**user_data.model_dump(), modified_at=datetime.utcnow())
-                .returning(User.id)
+                .values(
+                    **user_data.model_dump(exclude_none=True, exclude_unset=True),
+                    modified_at=datetime.utcnow(),
+                )
+                .returning(User)
             )
-            res = await self.db_session.scalar(query)
+            res = (await self.db_session.execute(query)).scalar()
+            await self.db_session.commit()
 
             if res is not None:
                 return res
@@ -154,9 +160,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 update(User)
                 .where(User.id == str(user_id))
                 .values(password, modified_at=datetime.utcnow())
-                .returning(User.id)
+                .returning(User)
             )
-            res = await self.db_session.scalar(query)
+            res = (await self.db_session.execute(query)).scalar()
+            await self.db_session.commit()
 
             if res is not None:
                 return res

@@ -50,7 +50,11 @@ async def create_user(
 
     new_user = await SQLAlchemyUserRepository(db_session).create_user(
         UserCreateModel(
-            **user_data.model_dump(exclude={"password", "group_id", "role"}),
+            **user_data.model_dump(
+                exclude={"password", "group_id", "role"},
+                exclude_none=True,
+                exclude_unset=True,
+            ),
             **{
                 "password": hashed_password,
                 "group_id": group_id,
@@ -84,9 +88,7 @@ async def login_user(
 async def get_updated_db_user(
     user_id: UUID4, update_data: UserUpdateModel, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).update_user(
-        user_id, **update_data.model_dump()
-    )
+    return await SQLAlchemyUserRepository(db_session).update_user(user_id, update_data)
 
 
 async def get_db_user_by_id(

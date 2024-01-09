@@ -9,11 +9,11 @@ from typing import Optional
 
 class UserBase(BaseModel):
     email: EmailStr
-    name: Optional[constr(min_length=1, max_length=15)]
-    surname: Optional[constr(min_length=1, max_length=15)]
-    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")]
-    is_blocked: Optional[bool]
-    image: Optional[str]
+    name: Optional[constr(min_length=1, max_length=15)] = None
+    surname: Optional[constr(min_length=1, max_length=15)] = None
+    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
+    is_blocked: Optional[bool] = None
+    image: Optional[str] = None
 
 
 class UserCreateModel(UserBase):
@@ -59,14 +59,14 @@ class UserResponseModel(UserBase):
 
 
 class UserUpdateModel(BaseModel):
-    email: Optional[EmailStr]
-    name: Optional[constr(min_length=1, max_length=15)]
-    surname: Optional[constr(min_length=1, max_length=15)]
-    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")]
-    image: Optional[str]
-    is_blocked: Optional[bool]
-    role: Optional[Role]
-    group_id: Optional[UUID4]
+    email: Optional[EmailStr] = None
+    name: Optional[constr(min_length=1, max_length=15)] = None
+    surname: Optional[constr(min_length=1, max_length=15)] = None
+    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
+    image: Optional[str] = None
+    is_blocked: Optional[bool] = None
+    role: Optional[Role] = None
+    group_id: Optional[UUID4] = None
 
 
 class TokenData(BaseModel):
