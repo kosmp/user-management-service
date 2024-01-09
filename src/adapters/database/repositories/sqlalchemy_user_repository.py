@@ -116,10 +116,24 @@ class SQLAlchemyUserRepository(UserRepository):
 
             query = query.limit(limit).offset((page - 1) * limit)
 
-            users = (await self.db_session.execute(query)).all()
-            res = [UserResponseModel(**user.dict()) for user in users]
+            users = (await self.db_session.execute(query)).fetchall()
+            res = [
+                UserResponseModel(
+                    id=user[0].id,
+                    email=user[0].email,
+                    name=user[0].name,
+                    surname=user[0].surname,
+                    phone_number=user[0].phone_number,
+                    is_blocked=user[0].is_blocked,
+                    image=user[0].image,
+                    group_id=user[0].group_id,
+                    role=user[0].role,
+                    created_at=user[0].created_at,
+                )
+                for user in users
+            ]
             return res
-        except AttributeError:
+        except AttributeError as attr_err:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Invalid attributes.",
