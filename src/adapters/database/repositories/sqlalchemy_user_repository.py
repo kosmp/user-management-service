@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
-from pydantic import UUID4
-from sqlalchemy import select, update, delete, asc, desc, UUID
-from datetime import datetime, timezone
+from pydantic import UUID4, EmailStr
+from sqlalchemy import select, update, delete, asc, desc
+from datetime import datetime
 
 from sqlalchemy.exc import (
     IntegrityError,
@@ -83,6 +83,15 @@ class SQLAlchemyUserRepository(UserRepository):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while retrieving the user.",
             )
+
+    async def user_exists(self, email: EmailStr) -> bool:
+        query = select(User).where(User.email == str(email))
+        res = await self.db_session.scalar(query)
+
+        if res is None:
+            return False
+
+        return True
 
     async def get_users(
         self,

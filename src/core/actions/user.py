@@ -11,12 +11,12 @@ from src.ports.schemas.user import (
     UserUpdateModel,
     CredentialsModel,
     SignUpModel,
+    UserCreateModel,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
-from src.ports.schemas.user import UserCreateModel
 from src.core.services.token import generate_tokens
 from src.adapters.database.redis_connection import redis_client
 
@@ -24,8 +24,7 @@ from src.adapters.database.redis_connection import redis_client
 async def create_user(
     user_data: SignUpModel, db_session: AsyncSession
 ) -> UserResponseModel:
-    user_exists = await get_db_user_by_email(user_data.email, db_session=db_session)
-    if user_exists:
+    if await user_exists(user_data.email, db_session=db_session):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"User with email '{user_data.email}' already exists.",
@@ -83,6 +82,10 @@ async def login_user(
         )
 
     return generate_tokens({"user_id": user.id})
+
+
+async def user_exists(email: EmailStr, db_session: AsyncSession) -> bool:
+    return await SQLAlchemyUserRepository(db_session).user_exists(email)
 
 
 async def get_updated_db_user(
