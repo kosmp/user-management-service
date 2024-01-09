@@ -6,7 +6,7 @@ from src.ports.schemas.user import (
     UserUpdateModel,
     UserResponseModel,
 )
-from pydantic import UUID5
+from pydantic import UUID4
 
 
 class UserRepository(ABC):
@@ -26,20 +26,20 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def update_user(
-        self, user_id: UUID5, user_data: UserUpdateModel
+        self, user_id: UUID4, user_data: UserUpdateModel
     ) -> Union[UserResponseModel, None]:
         pass
 
     @abstractmethod
     async def update_password(
-        self, user_id: UUID5, password: str
+        self, user_id: UUID4, password: str
     ) -> Union[UserResponseModel, None]:
         pass
 
     @abstractmethod
-    async def block_user(self, user_id: UUID5) -> Union[UserResponseModel, None]:
+    async def block_user(self, user_id: UUID4) -> Union[UserResponseModel, None]:
         pass
 
     @abstractmethod
-    async def delete_user(self, user_id: UUID5) -> Union[UUID5, None]:
+    async def delete_user(self, user_id: UUID4) -> Union[UUID4, None]:
         pass

@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import (
     UUID,
     Boolean,
@@ -16,11 +18,14 @@ from src.ports.enums import Role
 class User(Base):
     __tablename__ = "users"
 
-    id = mapped_column(UUID, primary_key=True, index=True)
+    id = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4(), index=True
+    )
     name = mapped_column(String(15), nullable=True)
     surname = mapped_column(String(15), nullable=True)
     phone_number = mapped_column(String(15), nullable=True)
     email = mapped_column(String, nullable=False, unique=True)
+    password = mapped_column(String, nullable=False)
     role = mapped_column(
         Enum(Role, name="role_enum", native_enum=False),
         nullable=False,
@@ -34,4 +39,4 @@ class User(Base):
     created_at = mapped_column(DateTime, nullable=False, default=func.now())
     modified_at = mapped_column(DateTime, nullable=True)
 
-    group = relationship("Group", back_populates="users", lazy="select", uselist=False)
+    group = relationship("Group", back_populates="users", lazy="joined", uselist=False)

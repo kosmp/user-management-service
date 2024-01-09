@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from typing import List
 
-from pydantic import UUID5
+from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core import oauth2_scheme
@@ -66,14 +66,14 @@ async def delete_me(
 
 @router.get("/user/{user_id}", response_model=UserResponseModel)
 async def get_user(
-    user_id: UUID5, db_session: AsyncSession = Depends(get_async_session)
+    user_id: UUID4, db_session: AsyncSession = Depends(get_async_session)
 ):
     return await get_db_user_by_id(user_id, db_session)
 
 
 @router.patch("/user/{user_id}/update", response_model=UserResponseModel)
 async def update_user(
-    user_id: UUID5,
+    user_id: UUID4,
     update_data: UserUpdateModel,
     db_session: AsyncSession = Depends(get_async_session),
 ):
@@ -82,7 +82,7 @@ async def update_user(
 
 @router.patch("/user/{user_id}/block", response_model=UserResponseModel)
 async def block_user(
-    user_id: UUID5,
+    user_id: UUID4,
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await block_db_user(user_id, db_session)

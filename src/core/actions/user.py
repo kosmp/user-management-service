@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status, Depends
-from pydantic import UUID5, EmailStr
+from pydantic import UUID4, EmailStr
 
 from src.adapters.database.database_settings import get_async_session
 from src.core.actions.group import get_db_group, create_db_group
@@ -27,12 +27,15 @@ async def create_user(
     user_exists = await get_db_user_by_email(user_data.email, db_session=db_session)
     if user_exists:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email is already exists"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"User with email '{user_data.email}' already exists.",
         )
 
-    group_id = None
+    group_id: UUID4 or None = None
     if user_data.group_id is not None:
-        group_id = (await get_db_group(user_data.group_id, db_session=db_session)).id
+        group = await get_db_group(user_data.group_id, db_session=db_session)
+        if group is not None:
+            group_id = group.id
 
     if group_id is None and user_data.group_name is not None:
         group_id = (
@@ -47,10 +50,12 @@ async def create_user(
 
     new_user = await SQLAlchemyUserRepository(db_session).create_user(
         UserCreateModel(
-            **user_data.model_dump(
-                exclude={"password", "group_id"},
-                include={"password": hashed_password, "group_id": group_id},
-            )
+            **user_data.model_dump(exclude={"password", "group_id", "role"}),
+            **{
+                "password": hashed_password,
+                "group_id": group_id,
+                "role": user_data.role,
+            },
         )
     )
 
@@ -77,7 +82,7 @@ async def login_user(
 
 
 async def get_updated_db_user(
-    user_id: UUID5, update_data: UserUpdateModel, db_session: AsyncSession
+    user_id: UUID4, update_data: UserUpdateModel, db_session: AsyncSession
 ) -> UserResponseModel:
     return await SQLAlchemyUserRepository(db_session).update_user(
         user_id, **update_data.model_dump()
@@ -85,7 +90,7 @@ async def get_updated_db_user(
 
 
 async def get_db_user_by_id(
-    user_id: UUID5, db_session: AsyncSession
+    user_id: UUID4, db_session: AsyncSession
 ) -> UserResponseModel:
     return await SQLAlchemyUserRepository(db_session).get_user(id=user_id)
 
@@ -96,11 +101,11 @@ async def get_db_user_by_email(
     return await SQLAlchemyUserRepository(db_session).get_user(email=email)
 
 
-async def block_db_user(user_id: UUID5, db_session: AsyncSession) -> UserResponseModel:
+async def block_db_user(user_id: UUID4, db_session: AsyncSession) -> UserResponseModel:
     return await SQLAlchemyUserRepository(db_session).block_user(user_id)
 
 
-async def delete_db_user(user_id: UUID5, db_session: AsyncSession) -> UUID5:
+async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
     return await SQLAlchemyUserRepository(db_session).delete_user(user_id)
 
 

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, constr, UUID5, EmailStr, field_validator
+from pydantic import BaseModel, constr, UUID4, EmailStr, field_validator
 
 from src.ports.schemas.group import GroupNameType
 from src.ports.enums import Role
@@ -18,13 +18,13 @@ class UserBase(BaseModel):
 
 class UserCreateModel(UserBase):
     password: str
-    group_id: UUID5
+    group_id: UUID4
     role: Role = Role.USER
 
 
 class SignUpModel(UserBase):
     password: constr(min_length=8)
-    group_id: Optional[UUID5] = None
+    group_id: Optional[UUID4] = None
     group_name: Optional[GroupNameType] = None
     role: Role = Role.USER
 
@@ -51,8 +51,8 @@ class CredentialsModel(BaseModel):
 
 
 class UserResponseModel(UserBase):
-    id: UUID5
-    group_id: UUID5
+    id: UUID4
+    group_id: UUID4
     role: Role
     created_at: datetime
 
@@ -65,8 +65,8 @@ class UserUpdateModel(BaseModel):
     image: Optional[str]
     is_blocked: Optional[bool]
     role: Optional[Role]
-    group_id: Optional[UUID5]
+    group_id: Optional[UUID4]
 
 
 class TokenData(BaseModel):
-    user_id: Optional[UUID5] = None
+    user_id: Optional[UUID4] = None
