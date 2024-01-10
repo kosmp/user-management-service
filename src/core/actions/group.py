@@ -18,7 +18,3 @@ async def get_db_group(group_id: UUID4, db_session: AsyncSession) -> GroupRespon
 
 async def delete_db_group(group_id: UUID4, db_session: AsyncSession) -> UUID4:
     return await SQLAlchemyGroupRepository(db_session).delete_group(group_id)
-
-
-# async def group_exists(group_name: GroupNameType, db_session: AsyncSession) -> bool:
-#     return await SQLAlchemyGroupRepository(db_session).group_exists(group_name)

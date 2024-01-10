@@ -2,7 +2,6 @@ from sqlalchemy import select, delete, UUID
 from fastapi import HTTPException, status
 from sqlalchemy.exc import (
     IntegrityError,
-    OperationalError,
     InvalidRequestError,
     NoResultFound,
 )
@@ -10,8 +9,8 @@ from sqlalchemy.exc import (
 from src.adapters.database.models.groups import Group
 from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.ports.schemas.group import CreateGroupModel, GroupNameType, GroupResponseModel
-from src.core.exceptions import DatabaseException, InvalidRequestException
+from src.ports.schemas.group import GroupNameType, GroupResponseModel
+from src.core.exceptions import InvalidRequestException
 from pydantic import UUID4
 from typing import Union
 
@@ -89,12 +88,3 @@ class SQLAlchemyGroupRepository(GroupRepository):
             raise HTTPException(
                 status_code=500, detail="An error occurred while deleting the group."
             )
-
-    async def group_exists(self, group_name: GroupNameType) -> bool:
-        query = select(Group).where(Group.name == str(group_name))
-        res = await self.db_session.scalar(query)
-
-        if res is None:
-            return False
-
-        return True
