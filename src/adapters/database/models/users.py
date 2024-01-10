@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import (
     UUID,
     Boolean,
@@ -8,6 +6,7 @@ from sqlalchemy import (
     ForeignKey,
     String,
     func,
+    text,
 )
 from sqlalchemy.orm import mapped_column, relationship
 
@@ -19,7 +18,10 @@ class User(Base):
     __tablename__ = "users"
 
     id = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4(), index=True
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
+        index=True,
     )
     name = mapped_column(String(15), nullable=True)
     surname = mapped_column(String(15), nullable=True)

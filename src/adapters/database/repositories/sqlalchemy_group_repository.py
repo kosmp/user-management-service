@@ -10,7 +10,7 @@ from sqlalchemy.exc import (
 from src.adapters.database.models.groups import Group
 from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.ports.schemas.group import CreateGroupModel, GroupNameType
+from src.ports.schemas.group import CreateGroupModel, GroupNameType, GroupResponseModel
 from src.core.exceptions import DatabaseException, InvalidRequestException
 from pydantic import UUID4
 from typing import Union
@@ -20,47 +20,44 @@ class SQLAlchemyGroupRepository(GroupRepository):
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
 
-    async def create_group(self, group_name: GroupNameType) -> Group:
+    async def create_group(self, group_name: GroupNameType) -> GroupResponseModel:
         try:
             new_group = Group(name=group_name)
 
             self.db_session.add(new_group)
             await self.db_session.commit()
 
-            return new_group
+            return GroupResponseModel(**new_group.__dict__)
         except IntegrityError as integrity_err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Group with name '{group_name}' already exists.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred while creating the group.",
             )
 
-    async def get_group(self, group_id: UUID4) -> Union[Group, None]:
+    async def get_group(self, group_id: UUID4) -> Union[GroupResponseModel, None]:
         try:
             query = select(Group).where(Group.id == str(group_id))
             res = await self.db_session.scalar(query)
 
             if res is not None:
-                return Group(id=res.id, name=res.name, created_at=res.created_at)
+                return GroupResponseModel(
+                    id=res.id, name=res.name, created_at=res.created_at
+                )
             else:
                 raise NoResultFound
         except NoResultFound:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Group not found.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
             raise HTTPException(
@@ -71,27 +68,33 @@ class SQLAlchemyGroupRepository(GroupRepository):
     async def delete_group(self, group_id: UUID4) -> Union[UUID4, None]:
         try:
             query = delete(Group).where(Group.id == UUID(group_id)).returning(Group.id)
-            res = await self.db_session.scalar(query)
+            res = await self.db_session.delete(query)
 
             if res is not None:
                 return res
         except IntegrityError as int_err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot delete the group due to integrity constraints.",
             )
         except NoResultFound:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Group not found.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestError
         except Exception as err:
             await self.db_session.rollback()
             raise HTTPException(
                 status_code=500, detail="An error occurred while deleting the group."
             )
+
+    async def group_exists(self, group_name: GroupNameType) -> bool:
+        query = select(Group).where(Group.name == str(group_name))
+        res = await self.db_session.scalar(query)
+
+        if res is None:
+            return False
+
+        return True

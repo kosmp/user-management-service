@@ -36,16 +36,13 @@ class SQLAlchemyUserRepository(UserRepository):
 
             return UserResponseModel(**new_user.__dict__)
         except IntegrityError as integrity_err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"User with email '{user_data.email}' already exists.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"An unexpected error occurred while creating the user.",
