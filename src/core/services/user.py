@@ -67,7 +67,7 @@ async def check_current_user_for_moderator_and_admin(
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with the {role} role does not have access.",
+            detail=f"User with the {role} role does not have access. You are not ADMIN or MODERATOR.",
         )
 
 

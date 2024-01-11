@@ -1,10 +1,12 @@
 from datetime import timedelta
+from typing import List
 
 from fastapi import HTTPException, status, Depends
 from pydantic import UUID4, EmailStr
 
 from adapters.database.redis_connection import redis_client
-from core import settings
+from core import settings, oauth2_scheme
+from ports.enums import Role
 from src.adapters.database.database_settings import get_async_session
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
@@ -124,3 +126,38 @@ async def get_refresh_token(refresh_token, db_session: AsyncSession) -> dict:
     redis_client.setex(str(refresh_token), expire_time, value=1)
 
     return res
+
+
+async def get_users_for_admin_and_moderator(
+    page: int,
+    limit: int,
+    filter_by_name: str,
+    sort_by: str,
+    order_by: str,
+    db_session: AsyncSession,
+    token: str = Depends(oauth2_scheme),
+) -> List[UserResponseModel]:
+    current_user_role = get_token_payload(token).role
+    group_id_current_user_belongs_to = get_token_payload(token).group_id_user_belongs_to
+
+    if current_user_role == Role.ADMIN:
+        return await SQLAlchemyUserRepository(db_session).get_users(
+            page, limit, filter_by_name, sort_by, order_by
+        )
+    elif current_user_role == Role.MODERATOR:
+        users = await SQLAlchemyUserRepository(db_session).get_users(
+            page, limit, filter_by_name, sort_by, order_by
+        )
+
+        result_users = []
+        for user in users:
+            if group_id_current_user_belongs_to == str(user.group_id):
+                result_users.append(user)
+
+        return result_users
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User with the {current_user_role} role does not have access. You are not ADMIN or MODERATOR.",
+        )

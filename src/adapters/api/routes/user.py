@@ -13,13 +13,11 @@ from src.core.services.user import (
 )
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
-from src.adapters.database.repositories.sqlalchemy_user_repository import (
-    SQLAlchemyUserRepository,
-)
 from src.core.actions.user import (
     get_updated_db_user,
     get_db_user_by_id,
     delete_db_user,
+    get_users_for_admin_and_moderator,
 )
 
 router = APIRouter()
@@ -34,8 +32,8 @@ async def get_users(
     order_by: str = Query("asc", regex="^(asc|desc)$"),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    return await SQLAlchemyUserRepository(db_session).get_users(
-        page, limit, filter_by_name, sort_by, order_by
+    return await get_users_for_admin_and_moderator(
+        page, limit, filter_by_name, sort_by, order_by, db_session
     )
 
 
