@@ -1,5 +1,8 @@
 from typing import Union
 
+from pydantic import UUID4
+
+from src.ports.enums import Role
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
@@ -14,7 +17,7 @@ from src.ports.schemas.user import (
 )
 from src.core.services.hasher import PasswordHasher
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -40,3 +43,29 @@ async def get_current_user_from_token(
         raise CredentialsException
 
     return user
+
+
+async def check_access_by_current_role_to_get_user(
+    group_id: UUID4, token: str = Depends(oauth2_scheme)
+) -> bool:
+    role = get_token_payload(token).role
+
+    if role == Role.ADMIN:
+        return True
+    elif role == Role.MODERATOR:
+        group_id_current_user_belongs_to = get_token_payload(
+            token
+        ).group_id_user_belongs_to
+
+        if group_id != group_id_current_user_belongs_to:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User with the {role} role does not have access. Belong to different groups.",
+            )
+        else:
+            return True
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User with the {role} role does not have access.",
+        )

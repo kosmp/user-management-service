@@ -3,6 +3,7 @@ from uuid import UUID
 
 from jose import JWTError, jwt
 
+from ports.enums import Role
 from src.ports.schemas.user import TokenData
 from src.core.exceptions import CredentialsException
 from src.core import settings
@@ -13,11 +14,12 @@ def get_token_payload(token) -> TokenData:
         payload = jwt.decode(
             token, settings.secret_key, algorithms=[settings.algorithm]
         )
-        user_id: UUID = payload.get("user_id")
-        if user_id is None:
-            raise CredentialsException
 
-        token_data = TokenData(user_id=str(user_id))
+        payload["user_id"] = str(payload.get("user_id"))
+        payload["group_id_user_belongs_to"] = str(
+            payload.get("group_id_user_belongs_to")
+        )
+        token_data = TokenData(**payload)
         return token_data
     except JWTError:
         raise CredentialsException
@@ -32,6 +34,7 @@ def generate_token(payload: TokenData, expires_delta: timedelta) -> str:
 
 def generate_tokens(payload: dict) -> dict:
     payload["user_id"] = str(payload.get("user_id"))
+    payload["group_id_user_belongs_to"] = str(payload.get("group_id_user_belongs_to"))
     access_token = generate_token(
         payload=TokenData(**payload),
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),

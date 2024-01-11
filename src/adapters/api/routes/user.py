@@ -1,14 +1,16 @@
-import uuid
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import List
 
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.ports.enums import Role
 from src.core import oauth2_scheme
 from src.core.services.token import get_token_payload
-from src.core.services.user import get_current_user_from_token
+from src.core.services.user import (
+    get_current_user_from_token,
+    check_access_by_current_role_to_get_user,
+)
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -70,15 +72,27 @@ async def delete_me(
 async def get_user(
     user_id: UUID4, db_session: AsyncSession = Depends(get_async_session)
 ):
-    return await get_db_user_by_id(user_id, db_session)
+    user = await get_db_user_by_id(user_id, db_session)
+    await check_access_by_current_role_to_get_user(user.group_id)
+
+    return user
 
 
 @router.patch("/user/{user_id}/update", response_model=UserResponseModel)
 async def update_user(
     user_id: UUID4,
     update_data: UserUpdateModel,
+    token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
 ):
+    current_user_role = get_token_payload(token).role
+
+    if current_user_role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User with the {current_user_role} role does not have access. You are not ADMIN.",
+        )
+
     return await get_updated_db_user(user_id, update_data, db_session)
 
 
