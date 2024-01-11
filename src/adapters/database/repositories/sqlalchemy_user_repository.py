@@ -15,6 +15,7 @@ from src.ports.schemas.user import (
     UserUpdateModel,
     UserCreateModel,
     UserResponseModel,
+    UserResponseModelWithPassword,
 )
 from src.adapters.database.models.users import User
 from src.core.exceptions import InvalidRequestException
@@ -48,7 +49,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail=f"An unexpected error occurred while creating the user.",
             )
 
-    async def get_user(self, **kwargs) -> Union[UserResponseModel, None]:
+    async def get_user(self, **kwargs) -> Union[UserResponseModelWithPassword, None]:
         try:
             user_id = kwargs.get("id")
             email = kwargs.get("email")

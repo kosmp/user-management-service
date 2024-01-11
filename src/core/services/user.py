@@ -10,6 +10,7 @@ from src.core.services.token import get_token_payload
 from src.ports.schemas.user import (
     CredentialsModel,
     UserResponseModel,
+    UserResponseModelWithPassword,
 )
 from src.core.services.hasher import PasswordHasher
 
@@ -19,11 +20,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 async def authenticate_user(
     credentials: CredentialsModel, db_session: AsyncSession
-) -> Union[UserResponseModel, None]:
+) -> Union[UserResponseModelWithPassword, None]:
     user = await SQLAlchemyUserRepository(db_session).get_user(email=credentials.email)
     if user is None:
         return
-    if not PasswordHasher.verify_password(credentials.password, user):
+    if not PasswordHasher.verify_password(credentials.password, user.password):
         return
     return user
 

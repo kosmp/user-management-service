@@ -62,10 +62,10 @@ async def create_user(
 async def login_user(
     credentials: CredentialsModel, db_session: AsyncSession = Depends(get_async_session)
 ) -> dict:
-    if credentials.email and credentials.password:
+    if not credentials.email or not credentials.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
         )
 
     user = await authenticate_user(credentials, db_session=db_session)

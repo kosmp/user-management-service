@@ -58,6 +58,10 @@ class UserResponseModel(UserBase):
     modified_at: Optional[datetime] = None
 
 
+class UserResponseModelWithPassword(UserResponseModel):
+    password: str
+
+
 class UserUpdateModel(BaseModel):
     email: Optional[EmailStr] = None
     name: Optional[constr(min_length=1, max_length=15)] = None
@@ -70,4 +74,4 @@ class UserUpdateModel(BaseModel):
 
 
 class TokenData(BaseModel):
-    user_id: Optional[UUID4] = None
+    user_id: Optional[str] = None

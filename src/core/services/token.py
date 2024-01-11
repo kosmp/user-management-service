@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta, datetime
 from uuid import UUID
 
@@ -18,7 +19,7 @@ def get_token_payload(token) -> TokenData:
         if user_id is None:
             raise CredentialsException
 
-        token_data = TokenData(user_id=user_id)
+        token_data = TokenData(user_id=str(user_id))
         return token_data
     except JWTError:
         raise CredentialsException
@@ -32,6 +33,7 @@ def generate_token(payload: TokenData, expires_delta: timedelta) -> str:
 
 
 def generate_tokens(payload: dict) -> dict:
+    payload["user_id"] = str(payload.get("user_id"))
     access_token = generate_token(
         payload=TokenData(**payload),
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
@@ -44,7 +46,7 @@ def generate_tokens(payload: dict) -> dict:
         expires_delta=refresh_token_expires,
     )
 
-    redis_client.setex(payload, refresh_token_expires, refresh_token)
+    redis_client.setex(json.dumps(payload), refresh_token_expires, refresh_token)
 
     return {
         "access_token": access_token,
