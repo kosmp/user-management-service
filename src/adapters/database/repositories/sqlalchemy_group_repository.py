@@ -66,11 +66,14 @@ class SQLAlchemyGroupRepository(GroupRepository):
 
     async def delete_group(self, group_id: UUID4) -> Union[UUID4, None]:
         try:
-            query = delete(Group).where(Group.id == UUID(group_id)).returning(Group.id)
-            res = await self.db_session.delete(query)
+            query = delete(Group).where(Group.id == str(group_id)).returning(Group.id)
+            res = await self.db_session.scalar(query)
+            await self.db_session.commit()
 
             if res is not None:
                 return res
+            else:
+                raise NoResultFound
         except IntegrityError as int_err:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

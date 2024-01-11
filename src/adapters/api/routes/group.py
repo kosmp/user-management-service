@@ -24,7 +24,7 @@ async def get_group(
     return await get_db_group(group_id, db_session)
 
 
-@router.delete("/group/{group_id}", response_model=str)
+@router.delete("/group/{group_id}", response_model=UUID4)
 async def delete_group(
     group_id: UUID4, db_session: AsyncSession = Depends(get_async_session)
 ):
