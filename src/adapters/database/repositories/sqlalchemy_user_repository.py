@@ -218,8 +218,9 @@ class SQLAlchemyUserRepository(UserRepository):
     async def delete_user(self, user_id: UUID4) -> Union[UUID4, None]:
         try:
             query = delete(User).where(User.id == str(user_id)).returning(User.id)
-
             res = await self.db_session.scalar(query)
+            await self.db_session.commit()
+
             if res is not None:
                 return res
         except NoResultFound:
