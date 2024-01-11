@@ -7,10 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.enums import Role
 from src.core import oauth2_scheme
 from src.core.services.token import get_token_payload
-from src.core.services.user import (
-    get_current_user_from_token,
-    check_access_by_current_role_to_get_user,
-)
+from src.core.services.user import get_current_user_from_token
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -72,10 +69,7 @@ async def delete_me(
 async def get_user(
     user_id: UUID4, db_session: AsyncSession = Depends(get_async_session)
 ):
-    user = await get_db_user_by_id(user_id, db_session)
-    await check_access_by_current_role_to_get_user(user.group_id)
-
-    return user
+    return await get_db_user_by_id(user_id, db_session)
 
 
 @router.patch("/user/{user_id}/update", response_model=UserResponseModel)

@@ -9,7 +9,10 @@ from src.adapters.database.database_settings import get_async_session
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
 from src.core.services.token import get_token_payload
-from src.core.services.user import authenticate_user
+from src.core.services.user import (
+    authenticate_user,
+    check_access_by_current_role_to_get_user,
+)
 from src.ports.schemas.user import (
     UserResponseModel,
     UserUpdateModel,
@@ -90,7 +93,10 @@ async def get_updated_db_user(
 async def get_db_user_by_id(
     user_id: UUID4, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(id=user_id)
+    user = await SQLAlchemyUserRepository(db_session).get_user(id=user_id)
+    await check_access_by_current_role_to_get_user(user.group_id)
+
+    return user
 
 
 async def get_db_user_by_email(
