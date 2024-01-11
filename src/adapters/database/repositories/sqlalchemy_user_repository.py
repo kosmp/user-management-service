@@ -224,6 +224,8 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if res is not None:
                 return res
+            else:
+                raise NoResultFound
         except NoResultFound:
             await self.db_session.rollback()
             raise HTTPException(

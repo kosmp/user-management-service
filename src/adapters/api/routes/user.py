@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, Query
 from typing import List
 
@@ -54,7 +56,7 @@ async def update_me(
     return await get_updated_db_user(user_id, update_data, db_session)
 
 
-@router.delete("/user/me", response_model=str)
+@router.delete("/user/me", response_model=UUID4)
 async def delete_me(
     token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
