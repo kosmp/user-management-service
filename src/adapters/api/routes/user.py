@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query
 from typing import List
 
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.ports.enums import Role
 from src.core import oauth2_scheme
 from src.core.services.token import get_token_payload
 from src.core.services.user import (
     get_current_user_from_token,
     check_current_user_for_admin,
-    check_current_user_for_moderator,
+    check_current_user_for_moderator_and_admin,
 )
 from src.ports.schemas.user import UserResponseModel, UserUpdateModel
 from src.adapters.database.database_settings import get_async_session
@@ -71,13 +70,12 @@ async def delete_me(
 @router.get(
     "/user/{user_id}",
     response_model=UserResponseModel,
-    dependencies=[Depends(check_current_user_for_admin)],
 )
 async def get_user(
     user_id: UUID4, db_session: AsyncSession = Depends(get_async_session)
 ):
     user = await get_db_user_by_id(user_id, db_session)
-    await check_current_user_for_moderator(user.group_id)
+    await check_current_user_for_moderator_and_admin(user.group_id)
 
     return user
 
