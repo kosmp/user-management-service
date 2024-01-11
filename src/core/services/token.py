@@ -4,7 +4,7 @@ from uuid import UUID
 
 from jose import JWTError, jwt
 
-from adapters.database.redis_connection import redis_client
+from src.adapters.database.redis_connection import redis_client
 from src.ports.schemas.user import TokenData
 from src.core.exceptions import CredentialsException
 from src.core import settings

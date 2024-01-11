@@ -9,6 +9,7 @@ from sqlalchemy.exc import (
     NoResultFound,
 )
 
+from src.adapters.database.redis_connection import redis_client
 from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.user import (
@@ -223,6 +224,9 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.commit()
 
             if res is not None:
+                if await redis_client.exists(user_id):
+                    redis_client.delete(user_id)
+
                 return res
             else:
                 raise NoResultFound
