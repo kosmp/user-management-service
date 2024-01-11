@@ -1,10 +1,8 @@
-import json
 from datetime import timedelta, datetime
 from uuid import UUID
 
 from jose import JWTError, jwt
 
-from src.adapters.database.redis_connection import redis_client
 from src.ports.schemas.user import TokenData
 from src.core.exceptions import CredentialsException
 from src.core import settings
@@ -45,8 +43,6 @@ def generate_tokens(payload: dict) -> dict:
         payload=TokenData(**payload),
         expires_delta=refresh_token_expires,
     )
-
-    redis_client.setex(json.dumps(payload), refresh_token_expires, refresh_token)
 
     return {
         "access_token": access_token,

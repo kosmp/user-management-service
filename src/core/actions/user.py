@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from fastapi import HTTPException, status, Depends
 from pydantic import UUID4, EmailStr
 
+from adapters.database.redis_connection import redis_client
+from core import settings
 from src.adapters.database.database_settings import get_async_session
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
@@ -18,7 +22,6 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import generate_tokens
-from src.adapters.database.redis_connection import redis_client
 
 
 async def create_user(
@@ -105,12 +108,21 @@ async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
 
 
 async def get_refresh_token(refresh_token, db_session: AsyncSession) -> dict:
+    if redis_client.get(str(refresh_token)) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid refresh token. Blacklisted.",
+        )
+
     token_payload = get_token_payload(refresh_token)
 
     # check if user with user_id exists
     await get_db_user_by_id(user_id=token_payload.user_id, db_session=db_session)
 
-    if await redis_client.exists(token_payload.user_id):
-        redis_client.delete(token_payload.user_id)
+    res = generate_tokens(token_payload.model_dump())
 
-    return generate_tokens(token_payload.model_dump())
+    expire_time = timedelta(minutes=settings.refresh_token_expire_minutes)
+
+    redis_client.setex(str(refresh_token), expire_time, value=1)
+
+    return res
