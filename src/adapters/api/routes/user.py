@@ -20,7 +20,6 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
 from src.core.actions.user import (
     get_updated_db_user,
     get_db_user_by_id,
-    block_db_user,
     delete_db_user,
 )
 

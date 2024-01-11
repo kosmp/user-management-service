@@ -11,7 +11,6 @@ from src.core.services.hasher import PasswordHasher
 from src.core.services.token import get_token_payload
 from src.core.services.user import (
     authenticate_user,
-    check_access_by_current_role_to_get_user,
 )
 from src.ports.schemas.user import (
     UserResponseModel,
