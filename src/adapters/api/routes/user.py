@@ -94,11 +94,3 @@ async def update_user(
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await get_updated_db_user(user_id, update_data, db_session)
-
-
-@router.patch("/user/{user_id}/block", response_model=UserResponseModel)
-async def block_user(
-    user_id: UUID4,
-    db_session: AsyncSession = Depends(get_async_session),
-):
-    return await block_db_user(user_id, db_session)

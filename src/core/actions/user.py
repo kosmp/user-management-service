@@ -102,10 +102,6 @@ async def get_db_user_by_email(
     return await SQLAlchemyUserRepository(db_session).get_user(email=email)
 
 
-async def block_db_user(user_id: UUID4, db_session: AsyncSession) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).block_user(user_id)
-
-
 async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
     return await SQLAlchemyUserRepository(db_session).delete_user(user_id)
 

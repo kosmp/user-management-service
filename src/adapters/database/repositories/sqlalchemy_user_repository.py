@@ -184,38 +184,6 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail="An error occurred while updating the user.",
             )
 
-    async def block_user(self, user_id: UUID4) -> Union[UserResponseModel, None]:
-        try:
-            query = (
-                update(User)
-                .where(User.id == str(user_id))
-                .values(is_blocked=True, modified_at=datetime.utcnow())
-                .returning(User)
-            )
-            res = await self.db_session.execute(query)
-            await self.db_session.commit()
-
-            res = res.scalar()
-            if res is not None:
-                return res
-            else:
-                raise NoResultFound
-        except NoResultFound:
-            await self.db_session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found.",
-            )
-        except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
-            raise InvalidRequestException
-        except Exception as err:
-            await self.db_session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="An error occurred while blocking the user.",
-            )
-
     async def delete_user(self, user_id: UUID4) -> Union[UUID4, None]:
         try:
             query = delete(User).where(User.id == str(user_id)).returning(User.id)
