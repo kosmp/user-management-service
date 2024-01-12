@@ -73,6 +73,15 @@ class UserUpdateModel(BaseModel):
     group_id: Optional[UUID4] = None
 
 
+class UserUpdateMeModel(BaseModel):
+    email: Optional[EmailStr] = None
+    name: Optional[constr(min_length=1, max_length=15)] = None
+    surname: Optional[constr(min_length=1, max_length=15)] = None
+    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
+    image: Optional[str] = None
+    group_id: Optional[UUID4] = None
+
+
 class TokenData(BaseModel):
     user_id: str
     role: str
