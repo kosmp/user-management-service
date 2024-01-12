@@ -31,9 +31,10 @@ async def get_users(
     sort_by: str = None,
     order_by: str = Query("asc", regex="^(asc|desc)$"),
     db_session: AsyncSession = Depends(get_async_session),
+    token: str = Depends(oauth2_scheme),
 ):
     return await get_users_for_admin_and_moderator(
-        page, limit, filter_by_name, sort_by, order_by, db_session
+        page, limit, filter_by_name, sort_by, order_by, db_session, token
     )
 
 
@@ -70,10 +71,12 @@ async def delete_me(
     response_model=UserResponseModel,
 )
 async def get_user(
-    user_id: UUID4, db_session: AsyncSession = Depends(get_async_session)
+    user_id: UUID4,
+    db_session: AsyncSession = Depends(get_async_session),
+    token: str = Depends(oauth2_scheme),
 ):
     user = await get_db_user_by_id(user_id, db_session)
-    await check_current_user_for_moderator_and_admin(user.group_id)
+    await check_current_user_for_moderator_and_admin(user.group_id, token)
 
     return user
 

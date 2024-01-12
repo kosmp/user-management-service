@@ -4,9 +4,9 @@ from typing import List
 from fastapi import HTTPException, status, Depends
 from pydantic import UUID4, EmailStr
 
-from adapters.database.redis_connection import redis_client
-from core import settings, oauth2_scheme
-from ports.enums import Role
+from src.adapters.database.redis_connection import redis_client
+from src.core import settings, oauth2_scheme
+from src.ports.enums import Role
 from src.adapters.database.database_settings import get_async_session
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
@@ -20,6 +20,7 @@ from src.ports.schemas.user import (
     CredentialsModel,
     SignUpModel,
     UserCreateModel,
+    TokenData,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -82,7 +83,13 @@ async def login_user(
             detail="Incorrect username or password",
         )
 
-    return generate_tokens({"user_id": user.id})
+    return generate_tokens(
+        TokenData(
+            user_id=str(user.id),
+            role=user.role,
+            group_id_user_belongs_to=str(user.group_id),
+        )
+    )
 
 
 async def get_updated_db_user(
@@ -135,7 +142,7 @@ async def get_users_for_admin_and_moderator(
     sort_by: str,
     order_by: str,
     db_session: AsyncSession,
-    token: str = Depends(oauth2_scheme),
+    token: str,
 ) -> List[UserResponseModel]:
     current_user_role = get_token_payload(token).role
     group_id_current_user_belongs_to = get_token_payload(token).group_id_user_belongs_to

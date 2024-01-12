@@ -46,7 +46,7 @@ async def get_current_user_from_token(
 
 
 async def check_current_user_for_moderator_and_admin(
-    group_id: UUID4, token: str = Depends(oauth2_scheme)
+    group_id: UUID4, token: str
 ) -> bool:
     role = get_token_payload(token).role
 

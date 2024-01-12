@@ -75,5 +75,5 @@ class UserUpdateModel(BaseModel):
 
 class TokenData(BaseModel):
     user_id: str
-    role: Role = Role.USER
+    role: str
     group_id_user_belongs_to: str
