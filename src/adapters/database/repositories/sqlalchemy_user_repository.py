@@ -46,7 +46,7 @@ class SQLAlchemyUserRepository(UserRepository):
         except Exception as generic_err:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"An unexpected error occurred while creating the user.",
+                detail="An unexpected error occurred while creating the user.",
             )
 
     async def get_user(self, **kwargs) -> Union[UserResponseModelWithPassword, None]:
