@@ -55,7 +55,7 @@ async def update_me(
 
     return await get_updated_db_user(
         user_id,
-        UserUpdateModel(**update_data.model_dump()),
+        UserUpdateModel.model_validate(update_data),
         db_session,
     )
 
