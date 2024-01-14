@@ -25,10 +25,19 @@ async def authenticate_user(
     credentials: CredentialsModel, db_session: AsyncSession
 ) -> Union[UserResponseModelWithPassword, None]:
     user = await SQLAlchemyUserRepository(db_session).get_user(email=credentials.email)
+
     if user is None:
-        return
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect login or password.",
+        )
+
     if not PasswordHasher.verify_password(credentials.password, user.password):
-        return
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password.",
+        )
+
     return user
 
 

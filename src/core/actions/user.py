@@ -75,11 +75,6 @@ async def login_user(
         )
 
     user = await authenticate_user(credentials, db_session=db_session)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-        )
 
     return generate_tokens(
         TokenData(
@@ -167,9 +162,3 @@ async def get_users_for_admin_and_moderator(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with the {current_user_role} role does not have access. You are not ADMIN or MODERATOR.",
         )
-
-
-async def reset_user_password(credentials: CredentialsModel):
-    PasswordHasher.verify_password(
-        credentials.password,
-    )
