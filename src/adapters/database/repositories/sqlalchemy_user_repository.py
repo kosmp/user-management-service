@@ -137,10 +137,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(
-                    **user_data.model_dump(exclude_none=True, exclude_unset=True),
-                    modified_at=datetime.utcnow(),
-                )
+                .values(**user_data.model_dump(exclude_none=True, exclude_unset=True))
                 .returning(User)
             )
             res = (await self.db_session.execute(query)).scalar()
@@ -165,7 +162,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(password, modified_at=datetime.utcnow())
+                .values(password)
                 .returning(User)
             )
             res = (await self.db_session.execute(query)).scalar()

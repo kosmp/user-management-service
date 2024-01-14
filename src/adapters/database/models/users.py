@@ -39,6 +39,6 @@ class User(Base):
     image = mapped_column(String, nullable=True)
     is_blocked = mapped_column(Boolean, nullable=False, default=False)
     created_at = mapped_column(DateTime, nullable=False, default=func.now())
-    modified_at = mapped_column(DateTime, nullable=True)
+    modified_at = mapped_column(DateTime, nullable=True, onupdate=func.now())
 
     group = relationship("Group", back_populates="users", lazy="joined", uselist=False)
