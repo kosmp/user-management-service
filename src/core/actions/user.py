@@ -147,22 +147,29 @@ async def get_users_for_admin_and_moderator(
 
     if current_user_role == Role.ADMIN:
         return await SQLAlchemyUserRepository(db_session).get_users(
-            page, limit, filter_by_name, sort_by, order_by
+            page=page,
+            limit=limit,
+            filter_by_name=filter_by_name,
+            sort_by=sort_by,
+            order_by=order_by,
         )
     elif current_user_role == Role.MODERATOR:
-        users = await SQLAlchemyUserRepository(db_session).get_users(
-            page, limit, filter_by_name, sort_by, order_by
+        return await SQLAlchemyUserRepository(db_session).get_users(
+            page=page,
+            limit=limit,
+            filter_by_name=filter_by_name,
+            filter_by_group_id=group_id_current_user_belongs_to,
+            sort_by=sort_by,
+            order_by=order_by,
         )
-
-        result_users = []
-        for user in users:
-            if group_id_current_user_belongs_to == str(user.group_id):
-                result_users.append(user)
-
-        return result_users
-
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with the {current_user_role} role does not have access. You are not ADMIN or MODERATOR.",
         )
+
+
+async def reset_user_password(credentials: CredentialsModel):
+    PasswordHasher.verify_password(
+        credentials.password,
+    )

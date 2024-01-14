@@ -96,11 +96,15 @@ class SQLAlchemyUserRepository(UserRepository):
         page: int = 1,
         limit: int = 30,
         filter_by_name: str = None,
+        filter_by_group_id: str = None,
         sort_by: str = None,
         order_by: str = "asc",
     ) -> List[UserResponseModel]:
         try:
             query = select(User)
+
+            if filter_by_group_id is not None:
+                query = query.where(User.group_id.ilike(f"%{filter_by_group_id}"))
 
             if filter_by_name is not None:
                 query = query.where(User.name.ilike(f"%{filter_by_name}%"))
