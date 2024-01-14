@@ -119,7 +119,7 @@ class SQLAlchemyUserRepository(UserRepository):
         except AttributeError as attr_err:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid attributes.",
+                detail="Invalid attributes.",
             )
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
