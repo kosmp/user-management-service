@@ -126,7 +126,7 @@ async def get_refresh_token(refresh_token, db_session: AsyncSession) -> dict:
     # check if user with user_id exists
     await get_db_user_by_id(user_id=token_payload.user_id, db_session=db_session)
 
-    res = generate_tokens(token_payload.model_dump())
+    res = generate_tokens(**token_payload.model_dump())
 
     expire_time = timedelta(minutes=settings.refresh_token_expire_minutes)
 
