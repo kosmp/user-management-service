@@ -56,11 +56,9 @@ async def create_user(
                 exclude_none=True,
                 exclude_unset=True,
             ),
-            **{
-                "password": hashed_password,
-                "group_id": group_id,
-                "role": user_data.role,
-            },
+            password=hashed_password,
+            group_id=group_id,
+            role=user_data.role,
         )
     )
 
