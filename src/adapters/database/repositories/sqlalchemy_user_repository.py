@@ -86,18 +86,6 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail="An error occurred while retrieving the user.",
             )
 
-    async def user_exists(
-        self, email: EmailStr or None = None, username: str or None = None
-    ) -> bool:
-        if username is not None:
-            query = select(User).where(User.username == username)
-        elif email is not None:
-            query = select(User).where(User.email == str(email))
-
-        res = (await self.db_session.execute(query)).scalar_one_or_none()
-
-        return bool(res)
-
     async def get_users(
         self,
         page: int = 1,
