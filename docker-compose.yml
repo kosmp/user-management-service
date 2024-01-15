@@ -36,3 +36,7 @@ services:
     volumes:
       - .:/home/appuser
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload" ]
+    depends_on:
+      - app-db
+      - app-redis
+      - app-rabbitmq
