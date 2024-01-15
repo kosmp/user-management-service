@@ -136,10 +136,9 @@ async def get_users_for_admin_and_moderator(
     db_session: AsyncSession,
     token: str,
 ) -> List[UserResponseModel]:
-    current_user_role = get_token_payload(token).role
-    group_id_current_user_belongs_to = get_token_payload(token).group_id_user_belongs_to
+    payload = get_token_payload(token)
 
-    if current_user_role == Role.ADMIN:
+    if payload.role == Role.ADMIN:
         return await SQLAlchemyUserRepository(db_session).get_users(
             page=page,
             limit=limit,
@@ -147,19 +146,19 @@ async def get_users_for_admin_and_moderator(
             sort_by=sort_by,
             order_by=order_by,
         )
-    elif current_user_role == Role.MODERATOR:
+    elif payload.role == Role.MODERATOR:
         return await SQLAlchemyUserRepository(db_session).get_users(
             page=page,
             limit=limit,
             filter_by_name=filter_by_name,
-            filter_by_group_id=group_id_current_user_belongs_to,
+            filter_by_group_id=payload.group_id_user_belongs_to,
             sort_by=sort_by,
             order_by=order_by,
         )
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with the {current_user_role} role does not have access. You are not ADMIN or MODERATOR.",
+            detail=f"User with the {payload.role} role does not have access. You are not ADMIN or MODERATOR.",
         )
 
 
