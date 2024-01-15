@@ -1,13 +1,13 @@
 from datetime import timedelta
 from typing import List
 
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr
 
+from src.core.services.pass_reset_producer import send_message
 from src.adapters.database.redis_connection import redis_client
-from src.core import settings, oauth2_scheme
+from src.core import settings
 from src.ports.enums import Role
-from src.adapters.database.database_settings import get_async_session
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
 from src.core.services.token import get_token_payload
@@ -21,6 +21,7 @@ from src.ports.schemas.user import (
     SignUpModel,
     UserCreateModel,
     TokenData,
+    PasswordModel,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -65,9 +66,7 @@ async def create_user(
     return new_user
 
 
-async def login_user(
-    credentials: CredentialsModel, db_session: AsyncSession = Depends(get_async_session)
-) -> dict:
+async def login_user(credentials: CredentialsModel, db_session: AsyncSession) -> dict:
     if not credentials.email or not credentials.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -162,3 +161,33 @@ async def get_users_for_admin_and_moderator(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"User with the {current_user_role} role does not have access. You are not ADMIN or MODERATOR.",
         )
+
+
+async def request_reset_user_password(email: EmailStr, db_session):
+    user = await get_db_user_by_email(email, db_session)
+
+    tokens = generate_tokens(
+        TokenData(
+            user_id=str(user.id),
+            role=user.role,
+            group_id_user_belongs_to=str(user.group_id),
+        )
+    )
+    access_token = tokens["access_token"]
+
+    send_message(str(email), access_token)
+
+    return {"success": True}
+
+
+async def reset_user_password(
+    token: str, new_password: PasswordModel, db_session: AsyncSession
+):
+    payload = get_token_payload(token)
+    user_id = payload.get("user_id")
+
+    hashed_password = PasswordHasher.get_password_hash(str(new_password))
+
+    return await SQLAlchemyUserRepository(db_session).update_password(
+        user_id, hashed_password
+    )
