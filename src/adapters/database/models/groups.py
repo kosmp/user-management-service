@@ -11,7 +11,6 @@ class Group(Base):
         UUID(as_uuid=True),
         primary_key=True,
         server_default=text("gen_random_uuid()"),
-        index=True,
     )
     name = mapped_column(String(15), nullable=False, unique=True)
     created_at = mapped_column(DateTime, nullable=False, default=func.now())
