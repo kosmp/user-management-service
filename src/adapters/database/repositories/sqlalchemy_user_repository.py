@@ -83,12 +83,9 @@ class SQLAlchemyUserRepository(UserRepository):
 
     async def user_exists(self, email: EmailStr) -> bool:
         query = select(User).where(User.email == str(email))
-        res = await self.db_session.scalar(query)
+        res = (await self.db_session.execute(query)).scalar_one_or_none()
 
-        if res is None:
-            return False
-
-        return True
+        return bool(res)
 
     async def get_users(
         self,
@@ -143,11 +140,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(**user_data.model_dump(exclude_none=True, exclude_unset=True))
                 .returning(User)
             )
-            res = (await self.db_session.execute(query)).scalar()
+            res = (await self.db_session.execute(query)).scalar_one_or_none()
             await self.db_session.commit()
 
-            if res is not None:
-                return res
+            return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
@@ -168,11 +164,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(password)
                 .returning(User)
             )
-            res = (await self.db_session.execute(query)).scalar()
+            res = (await self.db_session.execute(query)).scalar_one_or_none()
             await self.db_session.commit()
 
-            if res is not None:
-                return res
+            return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
             raise InvalidRequestException
