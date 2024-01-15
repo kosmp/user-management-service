@@ -37,8 +37,7 @@ class SignUpModel(UserBase):
         return value
 
 
-class CredentialsModel(BaseModel):
-    email: EmailStr
+class PasswordModel(BaseModel):
     password: constr(min_length=8)
 
     @field_validator("password")
@@ -48,6 +47,10 @@ class CredentialsModel(BaseModel):
         if not any(c.isdigit() for c in value):
             raise ValueError("Password must contain at least one digit")
         return value
+
+
+class CredentialsModel(PasswordModel):
+    email: EmailStr
 
 
 class UserResponseModel(UserBase):
