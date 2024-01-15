@@ -7,8 +7,9 @@ from src.core.actions.user import create_user, login_user, get_refresh_token
 from src.ports.schemas.user import (
     SignUpModel,
     UserResponseModel,
-    CredentialsModel,
+    CredentialsEmailModel,
     PasswordModel,
+    CredentialsUsernameModel,
 )
 from src.adapters.database.database_settings import get_async_session
 from src.core import oauth2_scheme
@@ -31,7 +32,9 @@ async def login(
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await login_user(
-        CredentialsModel(email=credentials.username, password=credentials.password),
+        CredentialsUsernameModel(
+            username=credentials.username, password=credentials.password
+        ),
         db_session,
     )
 

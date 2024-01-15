@@ -11,9 +11,10 @@ from src.core import oauth2_scheme
 from src.core.exceptions import CredentialsException
 from src.core.services.token import get_token_payload
 from src.ports.schemas.user import (
-    CredentialsModel,
+    CredentialsEmailModel,
     UserResponseModel,
     UserResponseModelWithPassword,
+    CredentialsUsernameModel,
 )
 from src.core.services.hasher import PasswordHasher
 
@@ -22,9 +23,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def authenticate_user(
-    credentials: CredentialsModel, db_session: AsyncSession
-) -> Union[UserResponseModelWithPassword, None]:
-    user = await SQLAlchemyUserRepository(db_session).get_user(email=credentials.email)
+    credentials: CredentialsEmailModel | CredentialsUsernameModel,
+    db_session: AsyncSession,
+) -> UserResponseModelWithPassword:
+    if isinstance(credentials, CredentialsEmailModel):
+        user = await SQLAlchemyUserRepository(db_session).get_user(
+            email=credentials.email
+        )
+    elif isinstance(credentials, CredentialsUsernameModel):
+        user = await SQLAlchemyUserRepository(db_session).get_user(
+            username=credentials.username
+        )
 
     if not PasswordHasher.verify_password(credentials.password, user.password):
         raise HTTPException(

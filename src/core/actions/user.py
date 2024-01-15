@@ -17,11 +17,12 @@ from src.core.services.user import (
 from src.ports.schemas.user import (
     UserResponseModel,
     UserUpdateModel,
-    CredentialsModel,
+    CredentialsEmailModel,
     SignUpModel,
     UserCreateModel,
     TokenData,
     PasswordModel,
+    CredentialsUsernameModel,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -33,7 +34,6 @@ from src.core.services.token import generate_tokens
 async def create_user(
     user_data: SignUpModel, db_session: AsyncSession
 ) -> UserResponseModel:
-    group_id: UUID4 or None = None
     if user_data.group_id is not None:
         group = await get_db_group(user_data.group_id, db_session=db_session)
         if group is not None:
@@ -45,7 +45,7 @@ async def create_user(
         ).id
     elif group_id is None and user_data.group_name is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Group name is required"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Group name is required."
         )
 
     hashed_password = PasswordHasher.get_password_hash(user_data.password)
@@ -66,12 +66,22 @@ async def create_user(
     return new_user
 
 
-async def login_user(credentials: CredentialsModel, db_session: AsyncSession) -> dict:
-    if not credentials.email or not credentials.password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password",
-        )
+async def login_user(
+    credentials: CredentialsEmailModel | CredentialsUsernameModel,
+    db_session: AsyncSession,
+) -> dict:
+    if isinstance(credentials, CredentialsEmailModel):
+        if not credentials.email or not credentials.password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Incorrect email or password",
+            )
+    elif isinstance(credentials, CredentialsUsernameModel):
+        if not credentials.username or not credentials.password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Incorrect username or password",
+            )
 
     user = await authenticate_user(credentials, db_session=db_session)
 
@@ -100,6 +110,12 @@ async def get_db_user_by_email(
     email: EmailStr, db_session: AsyncSession
 ) -> UserResponseModel:
     return await SQLAlchemyUserRepository(db_session).get_user(email=email)
+
+
+async def get_db_user_by_username(
+    username: str, db_session: AsyncSession
+) -> UserResponseModel:
+    return await SQLAlchemyUserRepository(db_session).get_user(username=username)
 
 
 async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:

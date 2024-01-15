@@ -9,6 +9,7 @@ from typing import Optional
 
 class UserBase(BaseModel):
     email: EmailStr
+    username: str
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
     phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
@@ -49,8 +50,12 @@ class PasswordModel(BaseModel):
         return value
 
 
-class CredentialsModel(PasswordModel):
+class CredentialsEmailModel(PasswordModel):
     email: EmailStr
+
+
+class CredentialsUsernameModel(PasswordModel):
+    username: str
 
 
 class UserResponseModel(UserBase):
@@ -69,6 +74,7 @@ class UserResponseModelWithPassword(UserResponseModel):
 
 class UserUpdateModel(BaseModel):
     email: Optional[EmailStr] = None
+    username: Optional[str] = None
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
     phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
@@ -80,6 +86,7 @@ class UserUpdateModel(BaseModel):
 
 class UserUpdateMeModel(BaseModel):
     email: Optional[EmailStr] = None
+    username: Optional[str] = None
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
     phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None

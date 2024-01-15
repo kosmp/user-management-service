@@ -39,7 +39,7 @@ class SQLAlchemyUserRepository(UserRepository):
         except IntegrityError as integrity_err:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"User with email '{user_data.email}' already exists.",
+                detail="User already exists.",
             )
         except InvalidRequestError as inv_req_err:
             raise InvalidRequestException
@@ -50,11 +50,16 @@ class SQLAlchemyUserRepository(UserRepository):
             )
 
     async def get_user(
-        self, user_id: UUID4 | None = None, email: EmailStr | None = None
-    ) -> Union[UserResponseModelWithPassword, None]:
+        self,
+        user_id: UUID4 | None = None,
+        email: EmailStr | None = None,
+        username: str | None = None,
+    ) -> UserResponseModelWithPassword:
         try:
             if user_id:
                 query = select(User).where(User.id == str(user_id))
+            elif username:
+                query = select(User).where(User.id == username)
             elif email:
                 query = select(User).where(User.email == str(email))
             else:
@@ -81,8 +86,14 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail="An error occurred while retrieving the user.",
             )
 
-    async def user_exists(self, email: EmailStr) -> bool:
-        query = select(User).where(User.email == str(email))
+    async def user_exists(
+        self, email: EmailStr or None = None, username: str or None = None
+    ) -> bool:
+        if username is not None:
+            query = select(User).where(User.username == username)
+        elif email is not None:
+            query = select(User).where(User.email == str(email))
+
         res = (await self.db_session.execute(query)).scalar_one_or_none()
 
         return bool(res)

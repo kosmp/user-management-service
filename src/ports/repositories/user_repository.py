@@ -16,7 +16,7 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user(self, **kwargs) -> Union[UserResponseModelWithPassword, None]:
+    async def get_user(self, **kwargs) -> UserResponseModelWithPassword:
         pass
 
     @abstractmethod
