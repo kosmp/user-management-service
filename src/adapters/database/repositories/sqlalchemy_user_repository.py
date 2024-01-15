@@ -35,7 +35,7 @@ class SQLAlchemyUserRepository(UserRepository):
             self.db_session.add(new_user)
             await self.db_session.commit()
 
-            return UserResponseModel(**new_user.__dict__)
+            return UserResponseModel.model_validate(new_user)
         except IntegrityError as integrity_err:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

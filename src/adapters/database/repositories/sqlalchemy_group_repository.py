@@ -26,7 +26,7 @@ class SQLAlchemyGroupRepository(GroupRepository):
             self.db_session.add(new_group)
             await self.db_session.commit()
 
-            return GroupResponseModel(**new_group.__dict__)
+            return GroupResponseModel.model_validate(new_group)
         except IntegrityError as integrity_err:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

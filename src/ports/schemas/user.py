@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, constr, UUID4, EmailStr, field_validator
+from pydantic import BaseModel, constr, UUID4, EmailStr, field_validator, ConfigDict
 
 from src.ports.schemas.group import GroupNameType
 from src.ports.enums import Role
@@ -54,6 +54,8 @@ class CredentialsModel(PasswordModel):
 
 
 class UserResponseModel(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID4
     group_id: UUID4
     role: Role
