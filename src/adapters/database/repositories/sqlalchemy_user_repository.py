@@ -115,7 +115,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = query.limit(limit).offset((page - 1) * limit)
 
             users = await self.db_session.scalars(query)
-            return list(users)
+            return users.all()
         except AttributeError as attr_err:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
