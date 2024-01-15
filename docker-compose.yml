@@ -1,11 +1,11 @@
 services:
   app-rabbitmq:
     image: rabbitmq:3.12.12-management
-    hostname: rabbitmq
+    container_name: app-rabbitmq
     restart: always
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
       - 5672:5672
       - 15672:15672
@@ -29,14 +29,10 @@ services:
     platform: linux/x86-64
     container_name: app
     build: .
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
       - .:/home/appuser
-    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload"]
-    environment:
-      - API_ENVIRONMENT=${API_ENVIRONMENT}
-    depends_on:
-      - app-db
-      - app-redis
-      - app-rabbitmq
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload" ]
