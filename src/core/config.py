@@ -17,6 +17,7 @@ class PydanticSettings(BaseSettings):
     refresh_token_expire_minutes: int = 60 * 24 * 7
     rabbitmq_default_user: str = None
     rabbitmq_default_pass: str = None
+    rabbitmq_port: int = None
     api_url: str = None
     web_url: str = None
 

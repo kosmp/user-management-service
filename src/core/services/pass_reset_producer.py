@@ -10,18 +10,18 @@ credentials = PlainCredentials(
 )
 
 connection_parameters = pika.ConnectionParameters(
-    "app-rabbitmq", "5672", "/", credentials
+    "app-rabbitmq", settings.rabbitmq_port, "/", credentials
 )
 
 
-def send_message(email_to: str, reset_link: str):
+def send_message(email_to: str, access_token: str):
     connection = pika.BlockingConnection(connection_parameters)
 
     channel = connection.channel()
 
     channel.exchange_declare(exchange="pubsub", exchange_type=ExchangeType.fanout)
 
-    body = json.dumps({"email": email_to, "reset_link": reset_link})
+    body = json.dumps({"email": email_to, "access_token": access_token})
 
     channel.basic_publish(exchange="pubsub", routing_key="letterbox", body=body)
 

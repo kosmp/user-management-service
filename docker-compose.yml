@@ -7,7 +7,7 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - 5672:5672
+      - "${RABBITMQ_PORT}:5672"
       - 15672:15672
   app-db:
     image: postgres:15
