@@ -49,11 +49,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail="An unexpected error occurred while creating the user.",
             )
 
-    async def get_user(self, **kwargs) -> Union[UserResponseModelWithPassword, None]:
+    async def get_user(
+        self, user_id: UUID4 | None = None, email: EmailStr | None = None
+    ) -> Union[UserResponseModelWithPassword, None]:
         try:
-            user_id = kwargs.get("id")
-            email = kwargs.get("email")
-
             if user_id:
                 query = select(User).where(User.id == str(user_id))
             elif email:

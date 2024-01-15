@@ -93,7 +93,7 @@ async def get_updated_db_user(
 async def get_db_user_by_id(
     user_id: UUID4, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(id=user_id)
+    return await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
 
 
 async def get_db_user_by_email(

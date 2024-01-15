@@ -40,7 +40,7 @@ async def get_current_user_from_token(
     db_session: AsyncSession = Depends(get_async_session),
 ) -> UserResponseModel:
     user_id = get_token_payload(token).user_id
-    user = await SQLAlchemyUserRepository(db_session).get_user(id=user_id)
+    user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
 
     if user is None:
         raise CredentialsException
