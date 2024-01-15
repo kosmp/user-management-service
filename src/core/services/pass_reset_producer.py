@@ -19,10 +19,10 @@ def send_message(email_to: str, access_token: str):
 
     channel = connection.channel()
 
-    channel.exchange_declare(exchange="pubsub", exchange_type=ExchangeType.fanout)
+    channel.queue_declare(queue="letterbox")
 
     body = json.dumps({"email": email_to, "access_token": access_token})
 
-    channel.basic_publish(exchange="pubsub", routing_key="letterbox", body=body)
+    channel.basic_publish(exchange="", routing_key="letterbox", body=body)
 
     connection.close()
