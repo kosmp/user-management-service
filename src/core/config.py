@@ -17,6 +17,13 @@ class PydanticSettings(BaseSettings):
     refresh_token_expire_minutes: int = 60 * 24 * 7
     rabbitmq_default_user: str = None
     rabbitmq_default_pass: str = None
+    mail_username: str = None
+    mail_password: str = None
+    mail_from: str = None
+    mail_port: int = None
+    mail_server: str = None
+    mail_from_name: str = None
+    api_url: str = None
 
     @property
     def get_db_creds(self):
