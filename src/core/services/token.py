@@ -13,10 +13,6 @@ def get_token_payload(token: str) -> TokenData:
             token, settings.secret_key, algorithms=[settings.algorithm]
         )
 
-        payload["user_id"] = str(payload.get("user_id"))
-        payload["group_id_user_belongs_to"] = str(
-            payload.get("group_id_user_belongs_to")
-        )
         token_data = TokenData(**payload)
         return token_data
     except JWTError:
