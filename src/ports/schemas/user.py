@@ -98,3 +98,9 @@ class TokenData(BaseModel):
     user_id: str
     role: str
     group_id_user_belongs_to: str
+
+
+class TokensResult(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"

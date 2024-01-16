@@ -23,6 +23,7 @@ from src.ports.schemas.user import (
     TokenData,
     PasswordModel,
     CredentialsUsernameModel,
+    TokensResult,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -67,7 +68,7 @@ async def create_user(
 async def login_user(
     credentials: CredentialsEmailModel | CredentialsUsernameModel,
     db_session: AsyncSession,
-) -> dict:
+) -> TokensResult:
     if isinstance(credentials, CredentialsEmailModel):
         if not credentials.email or not credentials.password:
             raise HTTPException(
@@ -120,7 +121,7 @@ async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
     return await SQLAlchemyUserRepository(db_session).delete_user(user_id)
 
 
-async def get_refresh_token(refresh_token, db_session: AsyncSession) -> dict:
+async def get_refresh_token(refresh_token, db_session: AsyncSession) -> TokensResult:
     if redis_client.get(str(refresh_token)) is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -186,7 +187,7 @@ async def request_reset_user_password(email: EmailStr, db_session):
             group_id_user_belongs_to=str(user.group_id),
         )
     )
-    access_token = tokens["access_token"]
+    access_token = tokens.access_token
 
     reset_link = f"${settings.web_url}/reset-password?token={access_token}"
 

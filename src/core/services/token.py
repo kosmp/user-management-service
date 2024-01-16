@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 
 from jose import JWTError, jwt
 
-from src.ports.schemas.user import TokenData
+from src.ports.schemas.user import TokenData, TokensResult
 from src.core.exceptions import CredentialsException
 from src.core import settings
 
@@ -26,7 +26,7 @@ def generate_token(payload: TokenData, expires_delta: timedelta) -> str:
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
-def generate_tokens(payload: TokenData) -> dict:
+def generate_tokens(payload: TokenData) -> TokensResult:
     payload.user_id = str(payload.user_id)
     payload.group_id_user_belongs_to = str(payload.group_id_user_belongs_to)
     access_token = generate_token(
@@ -41,8 +41,6 @@ def generate_tokens(payload: TokenData) -> dict:
         expires_delta=refresh_token_expires,
     )
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return TokensResult(
+        access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+    )
