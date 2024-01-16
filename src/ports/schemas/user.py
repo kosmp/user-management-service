@@ -13,7 +13,6 @@ class UserBase(BaseModel):
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
     phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
-    is_blocked: Optional[bool] = None
     image: Optional[str] = None
 
 
@@ -27,7 +26,6 @@ class SignUpModel(UserBase):
     password: constr(min_length=8)
     group_id: Optional[UUID4] = None
     group_name: Optional[GroupNameType] = None
-    role: Role = Role.USER
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -65,6 +63,7 @@ class UserResponseModel(UserBase):
     group_id: UUID4
     role: Role
     created_at: datetime
+    is_blocked: bool
     modified_at: Optional[datetime] = None
 
 
