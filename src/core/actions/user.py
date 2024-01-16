@@ -34,6 +34,7 @@ from src.core.services.token import generate_tokens
 async def create_user(
     user_data: SignUpModel, db_session: AsyncSession
 ) -> UserResponseModel:
+    group_id = None
     if user_data.group_id is not None:
         group = await get_db_group(user_data.group_id, db_session=db_session)
         if group is not None:
