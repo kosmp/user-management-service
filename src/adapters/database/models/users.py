@@ -24,8 +24,8 @@ class User(Base):
     )
     name = mapped_column(String(15), nullable=True)
     surname = mapped_column(String(15), nullable=True)
-    username = mapped_column(String, nullable=True, unique=True)
-    phone_number = mapped_column(String(15), nullable=True)
+    username = mapped_column(String, nullable=False, unique=True)
+    phone_number = mapped_column(String(15), nullable=False, unique=True)
     email = mapped_column(String, nullable=False, unique=True)
     password = mapped_column(String, nullable=False)
     role = mapped_column(
