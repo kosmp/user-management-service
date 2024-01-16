@@ -65,10 +65,10 @@ class SQLAlchemyUserRepository(UserRepository):
             else:
                 raise InvalidRequestError
 
-            res = await self.db_session.scalar(query)
+            res = (await self.db_session.execute(query)).one()
 
             if res is not None:
-                return res
+                return res[0]
             else:
                 raise NoResultFound
         except NoResultFound:
