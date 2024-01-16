@@ -20,6 +20,10 @@ class PydanticSettings(BaseSettings):
     rabbitmq_port: int = None
     api_url: str = None
     web_url: str = None
+    admin_username: str = None
+    admin_phone_number: str = None
+    admin_email: str = None
+    admin_password: str = None
 
     @property
     def get_db_creds(self):
