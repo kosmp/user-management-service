@@ -20,6 +20,8 @@ services:
     restart: always
     ports:
       - "${DB_PORT}:5432"
+    volumes:
+      - .local/services/db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -45,6 +47,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/home/appuser
+    init: True
     depends_on:
       app-db:
         condition: service_healthy
