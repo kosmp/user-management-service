@@ -180,7 +180,7 @@ async def request_reset_user_password(email: EmailStr, db_session):
     )
     access_token = tokens.access_token
 
-    reset_link = f"${settings.web_url}/reset-password?token={access_token}"
+    reset_link = f"${settings.api_url}/reset-password?token={access_token}"
 
     send_message(str(email), reset_link)
 
