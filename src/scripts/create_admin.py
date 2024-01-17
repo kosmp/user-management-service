@@ -1,5 +1,7 @@
 import asyncio
 
+from sqlalchemy import select
+
 from src.adapters.database.database_settings import async_session
 from src.adapters.database.models.groups import Group
 from src.adapters.database.models.users import User
@@ -8,9 +10,11 @@ from src.core.services.hasher import PasswordHasher
 
 
 async def create_admin_user():
-    new_group = Group(name="base")
-
     async with async_session() as session:
+        if await session.scalar(select(Group).where(Group.name == "base")) is not None:
+            return
+
+        new_group = Group(name="base")
         session.add(new_group)
         await session.flush()
 
