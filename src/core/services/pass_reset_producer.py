@@ -21,9 +21,9 @@ def send_message(email_to: str, reset_link: str):
 
     channel = connection.channel()
 
-    channel.queue_declare(queue="reset-password-stream")
+    channel.queue_declare(queue="reset-password-stream", durable=True)
 
-    properties = pika.BasicProperties()
+    properties = pika.BasicProperties(delivery_mode=2)
     properties.headers = {"subject": email_to}
 
     body = json.dumps(
