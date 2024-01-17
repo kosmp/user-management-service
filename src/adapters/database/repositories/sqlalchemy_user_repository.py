@@ -32,17 +32,20 @@ class SQLAlchemyUserRepository(UserRepository):
             )
 
             self.db_session.add(new_user)
-            await self.db_session.commit()
+            await self.db_session.flush()
 
             return UserResponseModel.model_validate(new_user)
         except IntegrityError as integrity_err:
+            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="User already exists.",
             )
         except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
+            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred while creating the user.",

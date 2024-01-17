@@ -10,16 +10,16 @@ from typing import Optional
 class UserBase(BaseModel):
     email: EmailStr
     username: str
+    phone_number: constr(pattern=r"^\+?[1-9]\d{1,14}$")
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
-    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
     image: Optional[str] = None
 
 
 class UserCreateModel(UserBase):
     password: str
     group_id: UUID4
-    role: Role = Role.USER
+    role: Optional[Role] = Role.USER
 
 
 class SignUpModel(UserBase):

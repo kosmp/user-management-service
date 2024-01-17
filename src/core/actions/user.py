@@ -51,15 +51,14 @@ async def create_user(
 
     hashed_password = PasswordHasher.get_password_hash(user_data.password)
 
-    user_data_dict = user_data.model_dump(
-        exclude={"password", "group_id"},
-        include={"password": hashed_password, "group_id": group_id},
-        exclude_none=True,
-        exclude_unset=True,
-    )
+    user_data_dict = user_data.model_dump()
+    user_data_dict.update({"password": hashed_password, "group_id": group_id})
+
     new_user = await SQLAlchemyUserRepository(db_session).create_user(
         UserCreateModel.model_validate(user_data_dict)
     )
+
+    await db_session.commit()
 
     return new_user
 
