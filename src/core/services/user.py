@@ -1,14 +1,12 @@
-from typing import Union
-
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import UUID4
-from sqlalchemy.exc import NoResultFound
 
+from src.core import security
 from src.ports.enums import Role
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
-from src.core import oauth2_scheme
 from src.core.exceptions import CredentialsException
 from src.core.services.token import get_token_payload
 from src.ports.schemas.user import (
@@ -18,7 +16,7 @@ from src.ports.schemas.user import (
 )
 from src.core.services.hasher import PasswordHasher
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -54,10 +52,10 @@ async def authenticate_user(
 
 
 async def get_current_user_from_token(
-    token: str = Depends(oauth2_scheme),
+    token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
 ) -> UserResponseModel:
-    user_id = get_token_payload(token).user_id
+    user_id = get_token_payload(token.credentials).user_id
     user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
 
     if user is None:
@@ -92,8 +90,10 @@ async def check_current_user_for_moderator_and_admin(
         )
 
 
-def check_current_user_for_admin(token: str = Depends(oauth2_scheme)) -> bool:
-    current_user_role = get_token_payload(token).role
+def check_current_user_for_admin(
+    token: HTTPAuthorizationCredentials = Security(security),
+) -> bool:
+    current_user_role = get_token_payload(token.credentials).role
 
     if current_user_role != Role.ADMIN:
         raise HTTPException(

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Security
 from typing import List
 
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import oauth2_scheme
+from src.core import security
 from src.core.services.token import get_token_payload
 from src.core.services.user import (
     get_current_user_from_token,
@@ -30,11 +31,11 @@ async def get_users(
     filter_by_name: str = None,
     sort_by: str = None,
     order_by: str = Query("asc", regex="^(asc|desc)$"),
+    token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
-    token: str = Depends(oauth2_scheme),
 ):
     return await get_users_for_admin_and_moderator(
-        page, limit, filter_by_name, sort_by, order_by, db_session, token
+        page, limit, filter_by_name, sort_by, order_by, db_session, token.credentials
     )
 
 
@@ -48,10 +49,10 @@ async def get_me(
 @router.patch("/user/me", response_model=UserResponseModel)
 async def update_me(
     update_data: UserUpdateMeModel,
-    token: str = Depends(oauth2_scheme),
+    token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    user_id = get_token_payload(token).user_id
+    user_id = get_token_payload(token.credentials).user_id
 
     return await get_updated_db_user(
         user_id,
@@ -62,10 +63,10 @@ async def update_me(
 
 @router.delete("/user/me", response_model=UUID4)
 async def delete_me(
-    token: str = Depends(oauth2_scheme),
+    token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    user_id = get_token_payload(token).user_id
+    user_id = get_token_payload(token.credentials).user_id
 
     return await delete_db_user(user_id, db_session)
 
@@ -76,11 +77,11 @@ async def delete_me(
 )
 async def get_user(
     user_id: UUID4,
+    token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
-    token: str = Depends(oauth2_scheme),
 ):
     user = await get_db_user_by_id(user_id, db_session)
-    await check_current_user_for_moderator_and_admin(user.group_id, token)
+    await check_current_user_for_moderator_and_admin(user.group_id, token.credentials)
 
     return user
 
