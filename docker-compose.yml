@@ -1,8 +1,42 @@
 services:
+  app-rabbitmq:
+    image: rabbitmq:3.12.12-management
+    container_name: app-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - 15672:15672
+  app-db:
+    image: postgres:15
+    container_name: app-pg
+    restart: always
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+  app-redis:
+    image: redis:7
+    restart: always
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: ${REDIS_PORT}
   app:
+    platform: linux/x86-64
+    container_name: app
     build: .
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
       - .:/home/appuser
-    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload"]
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload" ]
+    depends_on:
+      - app-db
+      - app-redis
+      - app-rabbitmq

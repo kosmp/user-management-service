@@ -1,22 +1,24 @@
 from fastapi import APIRouter, Depends, Query
 from typing import List
 
-from pydantic import UUID5
+from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.ports.schemas.user import UserResponseModel, UserUpdateModel
-from src.adapters.database.database_settings import get_async_session
-from src.adapters.database.repositories.sqlalchemy_user_repository import (
-    SQLAlchemyUserRepository,
+from src.core import oauth2_scheme
+from src.core.services.token import get_token_payload
+from src.core.services.user import (
+    get_current_user_from_token,
+    check_current_user_for_admin,
+    check_current_user_for_moderator_and_admin,
 )
-from src.core.services.token import get_token_data
+from src.ports.schemas.user import UserResponseModel, UserUpdateModel, UserUpdateMeModel
+from src.adapters.database.database_settings import get_async_session
 from src.core.actions.user import (
     get_updated_db_user,
-    get_db_user,
-    block_db_user,
+    get_db_user_by_id,
     delete_db_user,
+    get_users_for_admin_and_moderator,
 )
-from src.core import oauth2_scheme
 
 router = APIRouter()
 
@@ -29,62 +31,68 @@ async def get_users(
     sort_by: str = None,
     order_by: str = Query("asc", regex="^(asc|desc)$"),
     db_session: AsyncSession = Depends(get_async_session),
+    token: str = Depends(oauth2_scheme),
 ):
-    return await SQLAlchemyUserRepository(db_session).get_users(
-        page, limit, filter_by_name, sort_by, order_by
+    return await get_users_for_admin_and_moderator(
+        page, limit, filter_by_name, sort_by, order_by, db_session, token
     )
 
 
 @router.get("/user/me", response_model=UserResponseModel)
 async def get_me(
-    token: str = Depends(oauth2_scheme),
-    db_session: AsyncSession = Depends(get_async_session),
+    current_user: UserResponseModel = Depends(get_current_user_from_token),
 ):
-    token_data = get_token_data(token)
-
-    return await get_db_user(token_data.user_id, db_session)
+    return current_user
 
 
 @router.patch("/user/me", response_model=UserResponseModel)
 async def update_me(
-    update_data: UserUpdateModel,
+    update_data: UserUpdateMeModel,
     token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    user_id = get_token_data(token).user_id
+    user_id = get_token_payload(token).user_id
 
-    return await get_updated_db_user(user_id, update_data, db_session)
+    return await get_updated_db_user(
+        user_id,
+        UserUpdateModel.model_validate(update_data.model_dump()),
+        db_session,
+    )
 
 
-@router.delete("/user/me", response_model=str)
+@router.delete("/user/me", response_model=UUID4)
 async def delete_me(
     token: str = Depends(oauth2_scheme),
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    user_id = get_token_data(token).user_id
+    user_id = get_token_payload(token).user_id
 
     return await delete_db_user(user_id, db_session)
 
 
-@router.get("/user/{user_id}", response_model=UserResponseModel)
+@router.get(
+    "/user/{user_id}",
+    response_model=UserResponseModel,
+)
 async def get_user(
-    user_id: UUID5, db_session: AsyncSession = Depends(get_async_session)
+    user_id: UUID4,
+    db_session: AsyncSession = Depends(get_async_session),
+    token: str = Depends(oauth2_scheme),
 ):
-    return await get_db_user(user_id, db_session)
+    user = await get_db_user_by_id(user_id, db_session)
+    await check_current_user_for_moderator_and_admin(user.group_id, token)
+
+    return user
 
 
-@router.patch("/user/{user_id}/update", response_model=UserResponseModel)
+@router.patch(
+    "/user/{user_id}/update",
+    response_model=UserResponseModel,
+    dependencies=[Depends(check_current_user_for_admin)],
+)
 async def update_user(
-    user_id: UUID5,
+    user_id: UUID4,
     update_data: UserUpdateModel,
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await get_updated_db_user(user_id, update_data, db_session)
-
-
-@router.patch("/user/{user_id}/block", response_model=UserResponseModel)
-async def block_user(
-    user_id: UUID5,
-    db_session: AsyncSession = Depends(get_async_session),
-):
-    return await block_db_user(user_id, db_session)

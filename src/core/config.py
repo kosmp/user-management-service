@@ -8,9 +8,22 @@ class PydanticSettings(BaseSettings):
     db_host: str = None
     db_port: str = None
     db_database_name: str = None
+    redis_host: str = None
+    redis_port: int = None
+    redis_password: str = None
     secret_key: str = None
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 60 * 24 * 7
+    rabbitmq_default_user: str = None
+    rabbitmq_default_pass: str = None
+    rabbitmq_port: int = None
+    api_url: str = None
+    web_url: str = None
+    admin_username: str = None
+    admin_phone_number: str = None
+    admin_email: str = None
+    admin_password: str = None
 
     @property
     def get_db_creds(self):

@@ -6,6 +6,7 @@ class CredentialsException(HTTPException):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
 
@@ -20,6 +21,6 @@ class DatabaseException(HTTPException):
 class InvalidRequestException(HTTPException):
     def __init__(self):
         super().__init__(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="An invalid request error occurred while accessing the database.",
         )

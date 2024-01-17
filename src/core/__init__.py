@@ -7,4 +7,4 @@ settings = PydanticSettings(
     _env_file_encoding="utf-8",
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
