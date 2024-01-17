@@ -17,12 +17,11 @@ from src.core.services.user import (
 from src.ports.schemas.user import (
     UserResponseModel,
     UserUpdateModel,
-    CredentialsEmailModel,
+    CredentialsModel,
     SignUpModel,
     UserCreateModel,
     TokenData,
     PasswordModel,
-    CredentialsUsernameModel,
     TokensResult,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,21 +65,14 @@ async def create_user(
 
 
 async def login_user(
-    credentials: CredentialsEmailModel | CredentialsUsernameModel,
+    credentials: CredentialsModel,
     db_session: AsyncSession,
 ) -> TokensResult:
-    if isinstance(credentials, CredentialsEmailModel):
-        if not credentials.email or not credentials.password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect email or password",
-            )
-    elif isinstance(credentials, CredentialsUsernameModel):
-        if not credentials.username or not credentials.password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect username or password",
-            )
+    if not credentials.login or not credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect login or password",
+        )
 
     user = await authenticate_user(credentials, db_session=db_session)
 
@@ -108,7 +100,7 @@ async def get_db_user_by_id(
 async def get_db_user_by_email(
     email: EmailStr, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(email=email)
+    return await SQLAlchemyUserRepository(db_session).get_user(email=str(email))
 
 
 async def get_db_user_by_username(

@@ -16,7 +16,13 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user(self, **kwargs) -> UserResponseModelWithPassword:
+    async def get_user(
+        self,
+        user_id: UUID4 | None,
+        email: str | None,
+        username: str | None,
+        phone_number: str | None,
+    ) -> UserResponseModelWithPassword:
         pass
 
     @abstractmethod

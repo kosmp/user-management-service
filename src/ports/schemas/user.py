@@ -48,12 +48,8 @@ class PasswordModel(BaseModel):
         return value
 
 
-class CredentialsEmailModel(PasswordModel):
-    email: EmailStr
-
-
-class CredentialsUsernameModel(PasswordModel):
-    username: str
+class CredentialsModel(PasswordModel):
+    login: str
 
 
 class UserResponseModel(UserBase):

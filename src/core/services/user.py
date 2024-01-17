@@ -1,6 +1,7 @@
 from typing import Union
 
 from pydantic import UUID4
+from sqlalchemy.exc import NoResultFound
 
 from src.ports.enums import Role
 from src.adapters.database.database_settings import get_async_session
@@ -11,10 +12,9 @@ from src.core import oauth2_scheme
 from src.core.exceptions import CredentialsException
 from src.core.services.token import get_token_payload
 from src.ports.schemas.user import (
-    CredentialsEmailModel,
+    CredentialsModel,
     UserResponseModel,
     UserResponseModelWithPassword,
-    CredentialsUsernameModel,
 )
 from src.core.services.hasher import PasswordHasher
 
@@ -23,16 +23,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def authenticate_user(
-    credentials: CredentialsEmailModel | CredentialsUsernameModel,
+    credentials: CredentialsModel,
     db_session: AsyncSession,
 ) -> UserResponseModelWithPassword:
-    if isinstance(credentials, CredentialsEmailModel):
-        user = await SQLAlchemyUserRepository(db_session).get_user(
-            email=credentials.email
-        )
-    elif isinstance(credentials, CredentialsUsernameModel):
-        user = await SQLAlchemyUserRepository(db_session).get_user(
-            username=credentials.username
+    login_types = ["username", "email", "phone_number"]
+
+    user = None
+    for method in login_types:
+        try:
+            user = await SQLAlchemyUserRepository(db_session).get_user(
+                **{method: credentials.login}
+            )
+            if user:
+                break
+        except Exception as e:
+            continue
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
         )
 
     if not PasswordHasher.verify_password(credentials.password, user.password):

@@ -7,9 +7,8 @@ from src.core.actions.user import create_user, login_user, get_refresh_token
 from src.ports.schemas.user import (
     SignUpModel,
     UserResponseModel,
-    CredentialsEmailModel,
+    CredentialsModel,
     PasswordModel,
-    CredentialsUsernameModel,
     TokensResult,
 )
 from src.adapters.database.database_settings import get_async_session
@@ -29,13 +28,11 @@ async def signup(
 
 @router.post("/auth/login", response_model=TokensResult)
 async def login(
-    credentials: OAuth2PasswordRequestForm = Depends(),
+    credentials: CredentialsModel,
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await login_user(
-        CredentialsUsernameModel(
-            username=credentials.username, password=credentials.password
-        ),
+        credentials,
         db_session,
     )
 

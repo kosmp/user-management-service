@@ -1,7 +1,6 @@
 from fastapi import HTTPException, status
-from pydantic import UUID4, EmailStr
+from pydantic import UUID4
 from sqlalchemy import select, update, delete, asc, desc
-from datetime import datetime
 
 from sqlalchemy.exc import (
     IntegrityError,
@@ -52,16 +51,19 @@ class SQLAlchemyUserRepository(UserRepository):
     async def get_user(
         self,
         user_id: UUID4 | None = None,
-        email: EmailStr | None = None,
+        email: str | None = None,
         username: str | None = None,
+        phone_number: str | None = None,
     ) -> UserResponseModelWithPassword:
         try:
             if user_id:
                 query = select(User).where(User.id == str(user_id))
             elif username:
-                query = select(User).where(User.id == username)
+                query = select(User).where(User.username == username)
             elif email:
-                query = select(User).where(User.email == str(email))
+                query = select(User).where(User.email == email)
+            elif phone_number:
+                query = select(User).where(User.phone_number == phone_number)
             else:
                 raise InvalidRequestError
 
