@@ -39,10 +39,10 @@ async def login(
 
 @router.post("/auth/refresh-token", response_model=TokensResult)
 async def refresh_token(
-    token: HTTPAuthorizationCredentials = Security(security),
+    token: str,
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    return await get_refresh_token(token.credentials, db_session)
+    return await get_refresh_token(token, db_session)
 
 
 @router.post("/auth/request-password-reset")
