@@ -14,4 +14,4 @@ COPY . /home/appuser
 
 RUN chmod +x src/scripts/entrypoint_migrations.sh
 
-CMD ["src/scripts/entrypoint_migrations.sh"]
+ENTRYPOINT ["src/scripts/entrypoint_migrations.sh"]

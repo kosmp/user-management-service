@@ -6,6 +6,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 30s
+      timeout: 30s
+      retries: 10
     ports:
       - "${RABBITMQ_PORT}:5672"
       - 15672:15672
@@ -19,6 +24,11 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
   app-redis:
     image: redis:7
     restart: always
@@ -35,8 +45,10 @@ services:
       - "8000:8000"
     volumes:
       - .:/home/appuser
-    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--reload" ]
     depends_on:
-      - app-db
-      - app-redis
-      - app-rabbitmq
+      app-db:
+        condition: service_healthy
+      app-redis:
+        condition: service_started
+      app-rabbitmq:
+        condition: service_healthy
