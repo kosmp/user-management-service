@@ -1,6 +1,16 @@
+from dataclasses import dataclass
 from datetime import datetime
 
-from pydantic import BaseModel, constr, UUID4, EmailStr, field_validator, ConfigDict
+from fastapi import UploadFile, Form
+from pydantic import (
+    BaseModel,
+    constr,
+    UUID4,
+    EmailStr,
+    field_validator,
+    ConfigDict,
+    Field,
+)
 
 from src.ports.schemas.group import GroupNameType
 from src.ports.enums import Role
@@ -13,19 +23,25 @@ class UserBase(BaseModel):
     phone_number: constr(pattern=r"^\+?[1-9]\d{1,14}$")
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
-    image: Optional[str] = None
 
 
 class UserCreateModel(UserBase):
+    image: Optional[str] = None
     password: str
     group_id: UUID4
     role: Optional[Role] = Role.USER
 
 
-class SignUpModel(UserBase):
-    password: constr(min_length=8)
-    group_id: Optional[UUID4] = None
-    group_name: Optional[GroupNameType] = None
+@dataclass
+class SignUpModel:
+    email: EmailStr = Form()
+    username: str = Form()
+    phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$")
+    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    password: str = Form(min_length=8)
+    group_id: Optional[UUID4] = Form(default=None)
+    group_name: Optional[GroupNameType] = Form(default=None)
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -59,6 +75,7 @@ class UserResponseModel(UserBase):
     group_id: UUID4
     role: Role
     created_at: datetime
+    image: str
     is_blocked: bool
     modified_at: Optional[datetime] = None
 

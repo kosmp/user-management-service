@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Security
+from typing import Union, Annotated
+
+from fastapi import APIRouter, Depends, Security, UploadFile, File
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,9 +23,11 @@ router = APIRouter()
 
 @router.post("/auth/signup", response_model=UserResponseModel)
 async def signup(
-    user_data: SignUpModel, db_session: AsyncSession = Depends(get_async_session)
+    user_data: SignUpModel = Depends(),
+    image_file: Annotated[UploadFile, File()] = None,
+    db_session: AsyncSession = Depends(get_async_session),
 ):
-    return await create_user(user_data, db_session)
+    return await create_user(user_data, db_session, image_file)
 
 
 @router.post("/auth/login", response_model=TokensResult)

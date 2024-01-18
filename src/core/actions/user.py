@@ -1,7 +1,7 @@
 from datetime import timedelta
-from typing import List
+from typing import List, Annotated
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, File, UploadFile
 from pydantic import UUID4, EmailStr
 
 from src.adapters.database.redis_connection import redis_client
@@ -28,10 +28,13 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import generate_tokens
+from src.core.services.file_service import upload_image
 
 
 async def create_user(
-    user_data: SignUpModel, db_session: AsyncSession
+    user_data: SignUpModel,
+    db_session: AsyncSession,
+    image_file: Annotated[UploadFile, File()] = None,
 ) -> UserResponseModel:
     group_id = None
     if user_data.group_id is not None:
@@ -50,8 +53,14 @@ async def create_user(
 
     hashed_password = PasswordHasher.get_password_hash(user_data.password)
 
-    user_data_dict = user_data.model_dump()
-    user_data_dict.update({"password": hashed_password, "group_id": group_id})
+    user_data_dict = user_data.__dict__
+    user_data_dict.update(
+        {
+            "password": hashed_password,
+            "group_id": group_id,
+            "image": await upload_image(image_file) if image_file else None,
+        }
+    )
 
     new_user = await SQLAlchemyUserRepository(db_session).create_user(
         UserCreateModel.model_validate(user_data_dict)
