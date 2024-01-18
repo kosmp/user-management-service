@@ -4,9 +4,8 @@ from typing import List
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr
 
-from src.core.services.pass_reset_producer import send_message
 from src.adapters.database.redis_connection import redis_client
-from src.core import settings, rabbit_connection
+from src.core import settings, pika_client_instance
 from src.ports.enums import Role
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
@@ -182,7 +181,7 @@ async def request_reset_user_password(email: EmailStr, db_session):
 
     reset_link = f"${settings.api_url}/reset-password?token={access_token}"
 
-    send_message(str(email), reset_link, rabbit_connection)
+    pika_client_instance.send_message(str(email), reset_link, "reset-password-stream")
 
     return {"success": True}
 

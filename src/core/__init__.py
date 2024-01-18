@@ -1,6 +1,4 @@
-import pika
-from pika.adapters.blocking_connection import BlockingConnection
-from pika.credentials import PlainCredentials
+from src.core.services.pika_client import PikaClient
 from src.core.config import PydanticSettings
 from fastapi.security import HTTPBearer
 from pathlib import Path
@@ -12,23 +10,10 @@ settings = PydanticSettings(
 
 security = HTTPBearer()
 
-
-def open_rabbit_connection() -> BlockingConnection:
-    credentials = PlainCredentials(
-        settings.rabbitmq_default_user, settings.rabbitmq_default_pass
-    )
-
-    connection_parameters = pika.ConnectionParameters(
-        "app-rabbitmq", settings.rabbitmq_port, "/", credentials
-    )
-
-    conn = pika.BlockingConnection(connection_parameters)
-
-    return conn
-
-
-rabbit_connection = open_rabbit_connection()
-
-
-def close_rabbit_connection(conn: BlockingConnection):
-    conn.close()
+pika_client_instance = PikaClient(
+    rabbitmq_host=settings.rabbitmq_host,
+    rabbitmq_port=settings.rabbitmq_port,
+    rabbitmq_vhost=settings.rabbitmq_vhost,
+    rabbitmq_default_user=settings.rabbitmq_default_user,
+    rabbitmq_default_pass=settings.rabbitmq_default_pass,
+)
