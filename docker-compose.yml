@@ -44,6 +44,22 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: localstack
+    hostname: localstack
+    ports:
+      - 4566:4566
+      - 8080:8080
+    environment:
+      - SERVICES=s3,ses
+      - DEBUG=${DEBUG- }
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME=localstack
+    volumes:
+      - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
+      - .local/services/localstack-data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
   app:
     platform: linux/x86-64
     container_name: app
@@ -62,3 +78,5 @@ services:
         condition: service_started
       app-rabbitmq:
         condition: service_healthy
+      localstack:
+        condition: service_started
