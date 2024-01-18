@@ -17,6 +17,8 @@ async def validate_file(file: UploadFile) -> bool:
             detail="Supported file size is 0 - 1 MB.",
         )
 
+    await file.seek(0)
+
     content_type = file.content_type
     if (
         content_type != SupportedFileTypes.PNG
@@ -31,14 +33,18 @@ async def validate_file(file: UploadFile) -> bool:
     return True
 
 
-async def upload_image(image_file: UploadFile) -> str:
+async def upload_image(image_file: UploadFile, key: str) -> str:
     await validate_file(image_file)
 
     contents = await image_file.read()
 
-    image_hash = hashlib.md5(contents).hexdigest()
+    image_hash = hashlib.md5()
+    image_hash.update(contents)
+    image_hash.update(key.encode())
 
-    filename = f"{image_hash}.png"
+    combined_hash = image_hash.hexdigest()
+
+    filename = f"{combined_hash}.png"
 
     await AwsRepository().add_one(contents, filename)
 

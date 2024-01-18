@@ -58,7 +58,9 @@ async def create_user(
         {
             "password": hashed_password,
             "group_id": group_id,
-            "image": await upload_image(image_file) if image_file else None,
+            "image": await upload_image(image_file, user_data.username)
+            if image_file
+            else None,
         }
     )
 
