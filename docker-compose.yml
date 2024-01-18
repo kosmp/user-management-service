@@ -34,6 +34,10 @@ services:
   app-redis:
     image: redis:7
     restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - .local/services/redis:/data
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
