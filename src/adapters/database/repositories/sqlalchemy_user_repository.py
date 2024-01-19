@@ -102,7 +102,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 query = query.where(User.name.ilike(f"%{filter_by_name}%"))
 
             if filter_by_surname is not None:
-                query = query.where(User.surname.ilike(f"%{filter_by_name}%"))
+                query = query.where(User.surname.ilike(f"%{filter_by_surname}%"))
 
             if sort_by is not None:
                 column_to_sort = getattr(User, sort_by)
