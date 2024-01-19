@@ -29,11 +29,7 @@ async def signup(
     return await create_user(user_data, db_session, image_file)
 
 
-@router.post(
-    "/auth/login",
-    response_model=TokensResult,
-    dependencies=[Depends(check_curr_user_for_block_status)],
-)
+@router.post("/auth/login", response_model=TokensResult)
 async def login(
     credentials: CredentialsModel,
     db_session: AsyncSession = Depends(get_async_session),
@@ -44,11 +40,7 @@ async def login(
     )
 
 
-@router.post(
-    "/auth/refresh-token",
-    response_model=TokensResult,
-    dependencies=[Depends(check_curr_user_for_block_status)],
-)
+@router.post("/auth/refresh-token", response_model=TokensResult)
 async def refresh_token(
     token: str,
     db_session: AsyncSession = Depends(get_async_session),
@@ -56,19 +48,14 @@ async def refresh_token(
     return await get_refresh_token(token, db_session)
 
 
-@router.post(
-    "/auth/request-password-reset",
-    dependencies=[Depends(check_curr_user_for_block_status)],
-)
+@router.post("/auth/request-password-reset")
 async def request_reset_password(
     email: EmailStr, db_session: AsyncSession = Depends(get_async_session)
 ):
     return await request_reset_user_password(email, db_session)
 
 
-@router.put(
-    "/auth/reset-password", dependencies=[Depends(check_curr_user_for_block_status)]
-)
+@router.put("/auth/reset-password")
 async def reset_password(
     new_password: PasswordModel,
     token: str,

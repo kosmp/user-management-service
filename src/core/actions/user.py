@@ -86,7 +86,14 @@ async def login_user(
 
     user = await authenticate_user(credentials, db_session=db_session)
 
-    return generate_tokens(TokenData.model_validate(user))
+    return generate_tokens(
+        TokenData(
+            user_id=str(user.id),
+            role=user.role,
+            group_id=str(user.group_id),
+            is_blocked=user.is_blocked,
+        )
+    )
 
 
 async def get_updated_db_user(
