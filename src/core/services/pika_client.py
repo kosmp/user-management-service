@@ -27,6 +27,8 @@ class PikaClient:
 
         channel.queue_declare(queue=queue, durable=True)
 
+        # delivery_mode=2 for guaranteed delivery instead of message throughput
+        # Messages marked as persistent messages that are delivered to durable queues will be stored to the disk
         properties = pika.BasicProperties(delivery_mode=2)
         properties.headers = {"subject": email_to}
 
