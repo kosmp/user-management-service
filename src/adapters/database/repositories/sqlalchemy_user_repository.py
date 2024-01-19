@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
-from pydantic import UUID4, EmailStr
+from fastapi.logger import logger
+from pydantic import UUID4
 from sqlalchemy import select, update, delete, asc, desc
-from datetime import datetime
 
 from sqlalchemy.exc import (
     IntegrityError,
@@ -12,7 +12,7 @@ from sqlalchemy.exc import (
 from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.user import (
-    UserUpdateModel,
+    UserUpdateModelWithImage,
     UserCreateModel,
     UserResponseModel,
     UserResponseModelWithPassword,
@@ -33,17 +33,20 @@ class SQLAlchemyUserRepository(UserRepository):
             )
 
             self.db_session.add(new_user)
-            await self.db_session.commit()
+            await self.db_session.flush()
 
             return UserResponseModel.model_validate(new_user)
         except IntegrityError as integrity_err:
+            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="User already exists.",
             )
         except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
+            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred while creating the user.",
@@ -52,33 +55,26 @@ class SQLAlchemyUserRepository(UserRepository):
     async def get_user(
         self,
         user_id: UUID4 | None = None,
-        email: EmailStr | None = None,
+        email: str | None = None,
         username: str | None = None,
-    ) -> UserResponseModelWithPassword:
+        phone_number: str | None = None,
+    ) -> Union[UserResponseModelWithPassword, None]:
         try:
             if user_id:
                 query = select(User).where(User.id == str(user_id))
             elif username:
-                query = select(User).where(User.id == username)
+                query = select(User).where(User.username == username)
             elif email:
-                query = select(User).where(User.email == str(email))
+                query = select(User).where(User.email == email)
+            elif phone_number:
+                query = select(User).where(User.phone_number == phone_number)
             else:
                 raise InvalidRequestError
 
-            res = (await self.db_session.execute(query)).one()
+            res = (await self.db_session.execute(query)).one_or_none()
 
-            if res is not None:
-                return res[0]
-            else:
-                raise NoResultFound
-        except NoResultFound:
-            await self.db_session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found.",
-            )
+            return res[0]
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
             raise HTTPException(
@@ -91,6 +87,7 @@ class SQLAlchemyUserRepository(UserRepository):
         page: int = 1,
         limit: int = 30,
         filter_by_name: str = None,
+        filter_by_surname: str = None,
         filter_by_group_id: str = None,
         sort_by: str = None,
         order_by: str = "asc",
@@ -103,6 +100,9 @@ class SQLAlchemyUserRepository(UserRepository):
 
             if filter_by_name is not None:
                 query = query.where(User.name.ilike(f"%{filter_by_name}%"))
+
+            if filter_by_surname is not None:
+                query = query.where(User.surname.ilike(f"%{filter_by_surname}%"))
 
             if sort_by is not None:
                 column_to_sort = getattr(User, sort_by)
@@ -121,7 +121,6 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail="Invalid attributes.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as err:
             raise HTTPException(
@@ -130,7 +129,7 @@ class SQLAlchemyUserRepository(UserRepository):
             )
 
     async def update_user(
-        self, user_id: UUID4, user_data: UserUpdateModel
+        self, user_id: UUID4, user_data: UserUpdateModelWithImage
     ) -> Union[UserResponseModel, None]:
         try:
             query = (
@@ -139,15 +138,13 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(**user_data.model_dump(exclude_none=True, exclude_unset=True))
                 .returning(User)
             )
-            res = (await self.db_session.execute(query)).scalar_one_or_none()
+            res = await self.db_session.scalar(query)
             await self.db_session.commit()
-
+            await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while updating the user.",
@@ -165,13 +162,11 @@ class SQLAlchemyUserRepository(UserRepository):
             )
             res = (await self.db_session.execute(query)).scalar_one_or_none()
             await self.db_session.commit()
-
+            await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while updating the user.",
@@ -188,16 +183,13 @@ class SQLAlchemyUserRepository(UserRepository):
             else:
                 raise NoResultFound
         except NoResultFound:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestError
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while deleting the user.",

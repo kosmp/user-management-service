@@ -34,3 +34,5 @@ archive.zip
 .env.example
 .env.local
 .env.staging
+
+.local

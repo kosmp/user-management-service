@@ -24,17 +24,20 @@ class SQLAlchemyGroupRepository(GroupRepository):
             new_group = Group(name=group_name)
 
             self.db_session.add(new_group)
-            await self.db_session.commit()
+            await self.db_session.flush()
 
             return GroupResponseModel.model_validate(new_group)
         except IntegrityError as integrity_err:
+            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Group with name '{group_name}' already exists.",
             )
         except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
+            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred while creating the group.",
@@ -87,7 +90,6 @@ class SQLAlchemyGroupRepository(GroupRepository):
         except InvalidRequestError as inv_req_err:
             raise InvalidRequestError
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=500, detail="An error occurred while deleting the group."
             )

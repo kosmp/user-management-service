@@ -1,12 +1,11 @@
 from datetime import timedelta
-from typing import List
+from typing import List, Union
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from pydantic import UUID4, EmailStr
 
-from src.core.services.pass_reset_producer import send_message
 from src.adapters.database.redis_connection import redis_client
-from src.core import settings
+from src.core import settings, pika_client_instance
 from src.ports.enums import Role
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
@@ -16,13 +15,13 @@ from src.core.services.user import (
 )
 from src.ports.schemas.user import (
     UserResponseModel,
-    UserUpdateModel,
-    CredentialsEmailModel,
+    UserUpdateModelWithoutImage,
+    UserUpdateModelWithImage,
+    CredentialsModel,
     SignUpModel,
     UserCreateModel,
     TokenData,
     PasswordModel,
-    CredentialsUsernameModel,
     TokensResult,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,10 +29,13 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import generate_tokens
+from src.core.services.file_service import upload_image, delete_old_image
 
 
 async def create_user(
-    user_data: SignUpModel, db_session: AsyncSession
+    user_data: SignUpModel,
+    db_session: AsyncSession,
+    image_file: Union[UploadFile, None] = None,
 ) -> UserResponseModel:
     group_id = None
     if user_data.group_id is not None:
@@ -52,35 +54,35 @@ async def create_user(
 
     hashed_password = PasswordHasher.get_password_hash(user_data.password)
 
-    user_data_dict = user_data.model_dump(
-        exclude={"password", "group_id"},
-        include={"password": hashed_password, "group_id": group_id},
-        exclude_none=True,
-        exclude_unset=True,
+    user_data_dict = user_data.__dict__
+    user_data_dict.update(
+        {
+            "password": hashed_password,
+            "group_id": group_id,
+            "image": await upload_image(image_file, user_data.username)
+            if image_file
+            else None,
+        }
     )
+
     new_user = await SQLAlchemyUserRepository(db_session).create_user(
         UserCreateModel.model_validate(user_data_dict)
     )
+
+    await db_session.commit()
 
     return new_user
 
 
 async def login_user(
-    credentials: CredentialsEmailModel | CredentialsUsernameModel,
+    credentials: CredentialsModel,
     db_session: AsyncSession,
 ) -> TokensResult:
-    if isinstance(credentials, CredentialsEmailModel):
-        if not credentials.email or not credentials.password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect email or password",
-            )
-    elif isinstance(credentials, CredentialsUsernameModel):
-        if not credentials.username or not credentials.password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect username or password",
-            )
+    if not credentials.login or not credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect login or password",
+        )
 
     user = await authenticate_user(credentials, db_session=db_session)
 
@@ -88,33 +90,74 @@ async def login_user(
         TokenData(
             user_id=str(user.id),
             role=user.role,
-            group_id_user_belongs_to=str(user.group_id),
+            group_id=str(user.group_id),
+            is_blocked=user.is_blocked,
         )
     )
 
 
 async def get_updated_db_user(
-    user_id: UUID4, update_data: UserUpdateModel, db_session: AsyncSession
+    user_id: UUID4,
+    update_data: UserUpdateModelWithoutImage,
+    db_session: AsyncSession,
+    image_file: Union[UploadFile, None] = None,
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).update_user(user_id, update_data)
+    user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    image_url = None
+    if image_file is not None:
+        if user.image is not None:
+            await delete_old_image(user.image)
+        image_url = await upload_image(image_file, update_data.username)
+
+    update_model = update_data.model_dump()
+    update_model.update({"image": image_url})
+    user_data_dict = UserUpdateModelWithImage.model_validate(update_model)
+
+    return await SQLAlchemyUserRepository(db_session).update_user(
+        user_id, user_data_dict
+    )
 
 
 async def get_db_user_by_id(
     user_id: UUID4, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
+    user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return user
 
 
 async def get_db_user_by_email(
     email: EmailStr, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(email=email)
+    user = await SQLAlchemyUserRepository(db_session).get_user(email=str(email))
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return user
 
 
 async def get_db_user_by_username(
     username: str, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(username=username)
+    user = await SQLAlchemyUserRepository(db_session).get_user(username=username)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return user
 
 
 async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
@@ -133,7 +176,7 @@ async def get_refresh_token(refresh_token, db_session: AsyncSession) -> TokensRe
     # check if user with user_id exists
     await get_db_user_by_id(user_id=token_payload.user_id, db_session=db_session)
 
-    res = generate_tokens(**token_payload.model_dump())
+    res = generate_tokens(token_payload)
 
     expire_time = timedelta(minutes=settings.refresh_token_expire_minutes)
 
@@ -142,33 +185,27 @@ async def get_refresh_token(refresh_token, db_session: AsyncSession) -> TokensRe
     return res
 
 
-async def get_users_for_admin_and_moderator(
-    page: int,
-    limit: int,
-    filter_by_name: str,
-    sort_by: str,
-    order_by: str,
-    db_session: AsyncSession,
-    token: str,
-) -> List[UserResponseModel]:
-    payload = get_token_payload(token)
+async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]:
+    payload = get_token_payload(kwargs.get("token"))
 
     if payload.role == Role.ADMIN:
-        return await SQLAlchemyUserRepository(db_session).get_users(
-            page=page,
-            limit=limit,
-            filter_by_name=filter_by_name,
-            sort_by=sort_by,
-            order_by=order_by,
+        return await SQLAlchemyUserRepository(kwargs.get("db_session")).get_users(
+            page=kwargs.get("page"),
+            limit=kwargs.get("limit"),
+            filter_by_name=kwargs.get("filter_by_name"),
+            filter_by_surname=kwargs.get("filter_by_surname"),
+            sort_by=kwargs.get("sort_by"),
+            order_by=kwargs.get("order_by"),
         )
     elif payload.role == Role.MODERATOR:
-        return await SQLAlchemyUserRepository(db_session).get_users(
-            page=page,
-            limit=limit,
-            filter_by_name=filter_by_name,
-            filter_by_group_id=payload.group_id_user_belongs_to,
-            sort_by=sort_by,
-            order_by=order_by,
+        return await SQLAlchemyUserRepository(kwargs.get("db_session")).get_users(
+            page=kwargs.get("page"),
+            limit=kwargs.get("limit"),
+            filter_by_name=kwargs.get("filter_by_name"),
+            filter_by_surname=kwargs.get("filter_by_surname"),
+            filter_by_group_id=payload.group_id,
+            sort_by=kwargs.get("sort_by"),
+            order_by=kwargs.get("order_by"),
         )
     else:
         raise HTTPException(
@@ -180,18 +217,12 @@ async def get_users_for_admin_and_moderator(
 async def request_reset_user_password(email: EmailStr, db_session):
     user = await get_db_user_by_email(email, db_session)
 
-    tokens = generate_tokens(
-        TokenData(
-            user_id=str(user.id),
-            role=user.role,
-            group_id_user_belongs_to=str(user.group_id),
-        )
-    )
+    tokens = generate_tokens(TokenData.model_validate(user))
     access_token = tokens.access_token
 
-    reset_link = f"${settings.web_url}/reset-password?token={access_token}"
+    reset_link = f"${settings.api_url}/reset-password?token={access_token}"
 
-    send_message(str(email), reset_link)
+    pika_client_instance.send_message(str(email), reset_link, "reset-password-stream")
 
     return {"success": True}
 

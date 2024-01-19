@@ -3,7 +3,7 @@ from typing import Union, List
 
 from src.ports.schemas.user import (
     UserCreateModel,
-    UserUpdateModel,
+    UserUpdateModelWithImage,
     UserResponseModel,
     UserResponseModelWithPassword,
 )
@@ -16,7 +16,13 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user(self, **kwargs) -> UserResponseModelWithPassword:
+    async def get_user(
+        self,
+        user_id: UUID4 | None,
+        email: str | None,
+        username: str | None,
+        phone_number: str | None,
+    ) -> Union[UserResponseModelWithPassword, None]:
         pass
 
     @abstractmethod
@@ -33,7 +39,7 @@ class UserRepository(ABC):
 
     @abstractmethod
     async def update_user(
-        self, user_id: UUID4, user_data: UserUpdateModel
+        self, user_id: UUID4, user_data: UserUpdateModelWithImage
     ) -> Union[UserResponseModel, None]:
         pass
 
