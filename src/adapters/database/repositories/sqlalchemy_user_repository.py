@@ -97,6 +97,7 @@ class SQLAlchemyUserRepository(UserRepository):
         page: int = 1,
         limit: int = 30,
         filter_by_name: str = None,
+        filter_by_surname: str = None,
         filter_by_group_id: str = None,
         sort_by: str = None,
         order_by: str = "asc",
@@ -108,10 +109,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 query = query.where(User.group_id.ilike(f"%{filter_by_group_id}"))
 
             if filter_by_name is not None:
-                query = query.where(
-                    User.name.ilike(f"%{filter_by_name}%")
-                    | User.surname.ilike(f"%{filter_by_name}%")
-                )
+                query = query.where(User.name.ilike(f"%{filter_by_name}%"))
+
+            if filter_by_surname is not None:
+                query = query.where(User.surname.ilike(f"%{filter_by_name}%"))
 
             if sort_by is not None:
                 column_to_sort = getattr(User, sort_by)

@@ -170,6 +170,7 @@ async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]
             page=kwargs.get("page"),
             limit=kwargs.get("limit"),
             filter_by_name=kwargs.get("filter_by_name"),
+            filter_by_surname=kwargs.get("filter_by_surname"),
             sort_by=kwargs.get("sort_by"),
             order_by=kwargs.get("order_by"),
         )
@@ -178,6 +179,7 @@ async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]
             page=kwargs.get("page"),
             limit=kwargs.get("limit"),
             filter_by_name=kwargs.get("filter_by_name"),
+            filter_by_surname=kwargs.get("filter_by_surname"),
             filter_by_group_id=payload.group_id,
             sort_by=kwargs.get("sort_by"),
             order_by=kwargs.get("order_by"),
