@@ -22,7 +22,7 @@ class UserRepository(ABC):
         email: str | None,
         username: str | None,
         phone_number: str | None,
-    ) -> UserResponseModelWithPassword:
+    ) -> Union[UserResponseModelWithPassword, None]:
         pass
 
     @abstractmethod

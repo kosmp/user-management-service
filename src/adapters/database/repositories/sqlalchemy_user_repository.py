@@ -58,7 +58,7 @@ class SQLAlchemyUserRepository(UserRepository):
         email: str | None = None,
         username: str | None = None,
         phone_number: str | None = None,
-    ) -> UserResponseModelWithPassword:
+    ) -> Union[UserResponseModelWithPassword, None]:
         try:
             if user_id:
                 query = select(User).where(User.id == str(user_id))
@@ -71,20 +71,10 @@ class SQLAlchemyUserRepository(UserRepository):
             else:
                 raise InvalidRequestError
 
-            res = (await self.db_session.execute(query)).one()
+            res = (await self.db_session.execute(query)).one_or_none()
 
-            if res is not None:
-                return res[0]
-            else:
-                raise NoResultFound
-        except NoResultFound:
-            await self.db_session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found.",
-            )
+            return res[0]
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as generic_err:
             raise HTTPException(
@@ -131,7 +121,6 @@ class SQLAlchemyUserRepository(UserRepository):
                 detail="Invalid attributes.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as err:
             raise HTTPException(
@@ -154,10 +143,8 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while updating the user.",
@@ -178,10 +165,8 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestException
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while updating the user.",
@@ -198,16 +183,13 @@ class SQLAlchemyUserRepository(UserRepository):
             else:
                 raise NoResultFound
         except NoResultFound:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found.",
             )
         except InvalidRequestError as inv_req_err:
-            await self.db_session.rollback()
             raise InvalidRequestError
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while deleting the user.",

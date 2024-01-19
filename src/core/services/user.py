@@ -26,13 +26,12 @@ async def authenticate_user(
 
     user = None
     for method in login_types:
-        try:
-            user = await SQLAlchemyUserRepository(db_session).get_user(
-                **{method: credentials.login}
-            )
-            if user:
-                break
-        except Exception as e:
+        user = await SQLAlchemyUserRepository(db_session).get_user(
+            **{method: credentials.login}
+        )
+        if user:
+            break
+        else:
             continue
 
     if user is None:

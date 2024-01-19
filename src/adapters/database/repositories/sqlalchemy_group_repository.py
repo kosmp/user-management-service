@@ -90,7 +90,6 @@ class SQLAlchemyGroupRepository(GroupRepository):
         except InvalidRequestError as inv_req_err:
             raise InvalidRequestError
         except Exception as err:
-            await self.db_session.rollback()
             raise HTTPException(
                 status_code=500, detail="An error occurred while deleting the group."
             )

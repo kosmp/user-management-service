@@ -102,7 +102,12 @@ async def get_updated_db_user(
     db_session: AsyncSession,
     image_file: Union[UploadFile, None] = None,
 ) -> UserResponseModel:
-    user = await SQLAlchemyUserRepository(db_session).get_user(user_id)
+    user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
 
     image_url = None
     if image_file is not None:
@@ -122,19 +127,37 @@ async def get_updated_db_user(
 async def get_db_user_by_id(
     user_id: UUID4, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
+    user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return user
 
 
 async def get_db_user_by_email(
     email: EmailStr, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(email=str(email))
+    user = await SQLAlchemyUserRepository(db_session).get_user(email=str(email))
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return user
 
 
 async def get_db_user_by_username(
     username: str, db_session: AsyncSession
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).get_user(username=username)
+    user = await SQLAlchemyUserRepository(db_session).get_user(username=username)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return user
 
 
 async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
