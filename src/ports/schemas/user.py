@@ -102,9 +102,9 @@ class UserUpdateModelWithImage(UserUpdateModelWithoutImage):
 
 @dataclass
 class UserUpdateRequestModelWithoutImage:
-    email: Optional[EmailStr] = Form()
-    username: Optional[str] = Form()
-    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$")
+    email: Optional[EmailStr] = Form(default=None)
+    username: Optional[str] = Form(default=None)
+    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
     name: Optional[str] = Form(min_length=1, max_length=15, default=None)
     surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
     group_id: Optional[UUID4] = Form(default=None)
@@ -114,9 +114,9 @@ class UserUpdateRequestModelWithoutImage:
 
 @dataclass
 class UserUpdateMeRequestModel:
-    email: Optional[EmailStr] = Form()
-    username: Optional[str] = Form()
-    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$")
+    email: Optional[EmailStr] = Form(default=None)
+    username: Optional[str] = Form(default=None)
+    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
     name: Optional[str] = Form(min_length=1, max_length=15, default=None)
     surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
     group_id: Optional[UUID4] = Form(default=None)
