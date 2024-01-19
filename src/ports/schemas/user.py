@@ -75,7 +75,7 @@ class UserResponseModel(UserBase):
     group_id: UUID4
     role: Role
     created_at: datetime
-    image: str
+    image: Optional[str] = None
     is_blocked: bool
     modified_at: Optional[datetime] = None
 
