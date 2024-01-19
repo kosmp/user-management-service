@@ -84,7 +84,7 @@ class UserResponseModelWithPassword(UserResponseModel):
     password: str
 
 
-class UserUpdateModel(BaseModel):
+class UserUpdateModelWithoutImage(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
     name: Optional[constr(min_length=1, max_length=15)] = None
@@ -96,14 +96,30 @@ class UserUpdateModel(BaseModel):
     group_id: Optional[UUID4] = None
 
 
-class UserUpdateMeModel(BaseModel):
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
-    name: Optional[constr(min_length=1, max_length=15)] = None
-    surname: Optional[constr(min_length=1, max_length=15)] = None
-    phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
+class UserUpdateModelWithImage(UserUpdateModelWithoutImage):
     image: Optional[str] = None
-    group_id: Optional[UUID4] = None
+
+
+@dataclass
+class UserUpdateRequestModelWithoutImage:
+    email: Optional[EmailStr] = Form()
+    username: Optional[str] = Form()
+    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$")
+    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    group_id: Optional[UUID4] = Form(default=None)
+    is_blocked: Optional[bool] = Form(default=None)
+    role: Optional[Role] = Form(default=None)
+
+
+@dataclass
+class UserUpdateMeRequestModel:
+    email: Optional[EmailStr] = Form()
+    username: Optional[str] = Form()
+    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$")
+    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    group_id: Optional[UUID4] = Form(default=None)
 
 
 class TokenData(BaseModel):

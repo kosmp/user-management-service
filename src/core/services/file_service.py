@@ -49,3 +49,17 @@ async def upload_image(image_file: UploadFile, key: str) -> str:
     await AwsRepository().add_one(contents, filename)
 
     return f"{settings.localstack_endpoint_url}/{settings.s3_bucket_name}/{filename}"
+
+
+async def delete_old_image(url: str):
+    last_slash_index = url.rfind("/")
+
+    filename = url[last_slash_index + 1 :]
+
+    try:
+        await AwsRepository().delete(filename)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error with retrieving from bucket.",
+        )

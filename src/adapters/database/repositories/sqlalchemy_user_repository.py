@@ -11,7 +11,7 @@ from sqlalchemy.exc import (
 from src.ports.repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.user import (
-    UserUpdateModel,
+    UserUpdateModelWithImage,
     UserCreateModel,
     UserResponseModel,
     UserResponseModelWithPassword,
@@ -138,7 +138,7 @@ class SQLAlchemyUserRepository(UserRepository):
             )
 
     async def update_user(
-        self, user_id: UUID4, user_data: UserUpdateModel
+        self, user_id: UUID4, user_data: UserUpdateModelWithImage
     ) -> Union[UserResponseModel, None]:
         try:
             query = (

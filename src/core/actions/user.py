@@ -1,7 +1,7 @@
 from datetime import timedelta
-from typing import List, Annotated
+from typing import List, Union
 
-from fastapi import HTTPException, status, File, UploadFile
+from fastapi import HTTPException, status, UploadFile
 from pydantic import UUID4, EmailStr
 
 from src.adapters.database.redis_connection import redis_client
@@ -15,7 +15,8 @@ from src.core.services.user import (
 )
 from src.ports.schemas.user import (
     UserResponseModel,
-    UserUpdateModel,
+    UserUpdateModelWithoutImage,
+    UserUpdateModelWithImage,
     CredentialsModel,
     SignUpModel,
     UserCreateModel,
@@ -28,13 +29,13 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import generate_tokens
-from src.core.services.file_service import upload_image
+from src.core.services.file_service import upload_image, delete_old_image
 
 
 async def create_user(
     user_data: SignUpModel,
     db_session: AsyncSession,
-    image_file: Annotated[UploadFile, File()] = None,
+    image_file: Union[UploadFile, None] = None,
 ) -> UserResponseModel:
     group_id = None
     if user_data.group_id is not None:
@@ -95,9 +96,26 @@ async def login_user(
 
 
 async def get_updated_db_user(
-    user_id: UUID4, update_data: UserUpdateModel, db_session: AsyncSession
+    user_id: UUID4,
+    update_data: UserUpdateModelWithoutImage,
+    db_session: AsyncSession,
+    image_file: Union[UploadFile, None] = None,
 ) -> UserResponseModel:
-    return await SQLAlchemyUserRepository(db_session).update_user(user_id, update_data)
+    user = await SQLAlchemyUserRepository(db_session).get_user(user_id)
+
+    image_url = None
+    if image_file is not None:
+        if user.image is not None:
+            await delete_old_image(user.image)
+        image_url = await upload_image(image_file, update_data.username)
+
+    update_model = update_data.model_dump()
+    update_model.update({"image": image_url})
+    user_data_dict = UserUpdateModelWithImage.model_validate(update_model)
+
+    return await SQLAlchemyUserRepository(db_session).update_user(
+        user_id, user_data_dict
+    )
 
 
 async def get_db_user_by_id(

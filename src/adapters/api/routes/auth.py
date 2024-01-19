@@ -1,11 +1,9 @@
-from typing import Union, Annotated
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Security, UploadFile, File
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, UploadFile, File
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import security
 from src.core.actions.user import create_user, login_user, get_refresh_token
 from src.ports.schemas.user import (
     SignUpModel,

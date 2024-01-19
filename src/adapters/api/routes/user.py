@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, Query, Security
-from typing import List
+from fastapi import APIRouter, Depends, Query, Security, UploadFile, File
+from typing import List, Annotated
 
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import UUID4
@@ -12,7 +12,12 @@ from src.core.services.user import (
     check_current_user_for_admin,
     check_current_user_for_moderator_and_admin,
 )
-from src.ports.schemas.user import UserResponseModel, UserUpdateModel, UserUpdateMeModel
+from src.ports.schemas.user import (
+    UserResponseModel,
+    UserUpdateRequestModelWithoutImage,
+    UserUpdateMeRequestModel,
+    UserUpdateModelWithoutImage,
+)
 from src.adapters.database.database_settings import get_async_session
 from src.core.actions.user import (
     get_updated_db_user,
@@ -48,16 +53,18 @@ async def get_me(
 
 @router.patch("/user/me", response_model=UserResponseModel)
 async def update_me(
-    update_data: UserUpdateMeModel,
+    update_data: UserUpdateMeRequestModel = Depends(),
+    image_file: Annotated[UploadFile, File()] = None,
     token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
 ):
     user_id = get_token_payload(token.credentials).user_id
 
     return await get_updated_db_user(
-        user_id,
-        UserUpdateModel.model_validate(update_data.model_dump()),
-        db_session,
+        update_data=UserUpdateModelWithoutImage(**update_data.__dict__),
+        user_id=user_id,
+        db_session=db_session,
+        image_file=image_file,
     )
 
 
@@ -93,7 +100,13 @@ async def get_user(
 )
 async def update_user(
     user_id: UUID4,
-    update_data: UserUpdateModel,
+    update_data: UserUpdateRequestModelWithoutImage = Depends(),
+    image_file: Annotated[UploadFile, File()] = None,
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    return await get_updated_db_user(user_id, update_data, db_session)
+    return await get_updated_db_user(
+        update_data=UserUpdateModelWithoutImage(**update_data.__dict__),
+        user_id=user_id,
+        db_session=db_session,
+        image_file=image_file,
+    )
