@@ -18,7 +18,7 @@ class PikaClient:
 
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(
-                rabbitmq_host, rabbitmq_port, rabbitmq_vhost, credentials
+                rabbitmq_host, rabbitmq_port, rabbitmq_vhost, credentials, heartbeat=0
             )
         )
 
