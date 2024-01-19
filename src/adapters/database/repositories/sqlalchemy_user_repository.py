@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from fastapi.logger import logger
 from pydantic import UUID4
 from sqlalchemy import select, update, delete, asc, desc
 
@@ -147,9 +148,9 @@ class SQLAlchemyUserRepository(UserRepository):
                 .values(**user_data.model_dump(exclude_none=True, exclude_unset=True))
                 .returning(User)
             )
-            res = (await self.db_session.execute(query)).scalar_one_or_none()
+            res = await self.db_session.scalar(query)
             await self.db_session.commit()
-
+            await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
@@ -173,7 +174,7 @@ class SQLAlchemyUserRepository(UserRepository):
             )
             res = (await self.db_session.execute(query)).scalar_one_or_none()
             await self.db_session.commit()
-
+            await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
