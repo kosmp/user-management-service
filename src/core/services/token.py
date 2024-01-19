@@ -27,8 +27,6 @@ def generate_token(payload: TokenData, expires_delta: timedelta) -> str:
 
 
 def generate_tokens(payload: TokenData) -> TokensResult:
-    payload.user_id = str(payload.user_id)
-    payload.group_id_user_belongs_to = str(payload.group_id_user_belongs_to)
     access_token = generate_token(
         payload=TokenData(**payload.model_dump()),
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),

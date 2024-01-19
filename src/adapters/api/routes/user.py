@@ -9,6 +9,9 @@ from src.core import security
 from src.core.services.token import get_token_payload
 from src.core.services.user import (
     get_current_user_from_token,
+)
+from src.core.permissions import (
+    check_curr_user_for_block_status,
     check_current_user_for_admin,
     check_current_user_for_moderator_and_admin,
 )
@@ -29,7 +32,11 @@ from src.core.actions.user import (
 router = APIRouter()
 
 
-@router.get("/users", response_model=List[UserResponseModel])
+@router.get(
+    "/users",
+    response_model=List[UserResponseModel],
+    dependencies=[Depends(check_curr_user_for_block_status)],
+)
 async def get_users(
     page: int = Query(1, ge=1),
     limit: int = Query(30, ge=1, le=100),
@@ -44,14 +51,22 @@ async def get_users(
     )
 
 
-@router.get("/user/me", response_model=UserResponseModel)
+@router.get(
+    "/user/me",
+    response_model=UserResponseModel,
+    dependencies=[Depends(check_curr_user_for_block_status)],
+)
 async def get_me(
     current_user: UserResponseModel = Depends(get_current_user_from_token),
 ):
     return current_user
 
 
-@router.patch("/user/me", response_model=UserResponseModel)
+@router.patch(
+    "/user/me",
+    response_model=UserResponseModel,
+    dependencies=[Depends(check_curr_user_for_block_status)],
+)
 async def update_me(
     update_data: UserUpdateMeRequestModel = Depends(),
     image_file: Annotated[UploadFile, File()] = None,
@@ -68,7 +83,11 @@ async def update_me(
     )
 
 
-@router.delete("/user/me", response_model=UUID4)
+@router.delete(
+    "/user/me",
+    response_model=UUID4,
+    dependencies=[Depends(check_curr_user_for_block_status)],
+)
 async def delete_me(
     token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
@@ -81,6 +100,7 @@ async def delete_me(
 @router.get(
     "/user/{user_id}",
     response_model=UserResponseModel,
+    dependencies=[Depends(check_curr_user_for_block_status)],
 )
 async def get_user(
     user_id: UUID4,
@@ -96,7 +116,10 @@ async def get_user(
 @router.patch(
     "/user/{user_id}/update",
     response_model=UserResponseModel,
-    dependencies=[Depends(check_current_user_for_admin)],
+    dependencies=[
+        Depends(check_current_user_for_admin),
+        Depends(check_curr_user_for_block_status),
+    ],
 )
 async def update_user(
     user_id: UUID4,

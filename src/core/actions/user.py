@@ -86,13 +86,7 @@ async def login_user(
 
     user = await authenticate_user(credentials, db_session=db_session)
 
-    return generate_tokens(
-        TokenData(
-            user_id=str(user.id),
-            role=user.role,
-            group_id_user_belongs_to=str(user.group_id),
-        )
-    )
+    return generate_tokens(TokenData.model_validate(user))
 
 
 async def get_updated_db_user(
@@ -185,7 +179,7 @@ async def get_users_for_admin_and_moderator(
             page=page,
             limit=limit,
             filter_by_name=filter_by_name,
-            filter_by_group_id=payload.group_id_user_belongs_to,
+            filter_by_group_id=payload.group_id,
             sort_by=sort_by,
             order_by=order_by,
         )
@@ -199,13 +193,7 @@ async def get_users_for_admin_and_moderator(
 async def request_reset_user_password(email: EmailStr, db_session):
     user = await get_db_user_by_email(email, db_session)
 
-    tokens = generate_tokens(
-        TokenData(
-            user_id=str(user.id),
-            role=user.role,
-            group_id_user_belongs_to=str(user.group_id),
-        )
-    )
+    tokens = generate_tokens(TokenData.model_validate(user))
     access_token = tokens.access_token
 
     reset_link = f"${settings.api_url}/reset-password?token={access_token}"

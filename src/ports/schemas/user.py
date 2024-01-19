@@ -125,7 +125,8 @@ class UserUpdateMeRequestModel:
 class TokenData(BaseModel):
     user_id: str
     role: str
-    group_id_user_belongs_to: str
+    group_id: str
+    is_blocked: bool
 
 
 class TokensResult(BaseModel):
