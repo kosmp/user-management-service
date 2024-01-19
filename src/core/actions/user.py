@@ -162,33 +162,25 @@ async def get_refresh_token(refresh_token, db_session: AsyncSession) -> TokensRe
     return res
 
 
-async def get_users_for_admin_and_moderator(
-    page: int,
-    limit: int,
-    filter_by_name: str,
-    sort_by: str,
-    order_by: str,
-    db_session: AsyncSession,
-    token: str,
-) -> List[UserResponseModel]:
-    payload = get_token_payload(token)
+async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]:
+    payload = get_token_payload(kwargs.get("token"))
 
     if payload.role == Role.ADMIN:
-        return await SQLAlchemyUserRepository(db_session).get_users(
-            page=page,
-            limit=limit,
-            filter_by_name=filter_by_name,
-            sort_by=sort_by,
-            order_by=order_by,
+        return await SQLAlchemyUserRepository(kwargs.get("db_session")).get_users(
+            page=kwargs.get("page"),
+            limit=kwargs.get("limit"),
+            filter_by_name=kwargs.get("filter_by_name"),
+            sort_by=kwargs.get("sort_by"),
+            order_by=kwargs.get("order_by"),
         )
     elif payload.role == Role.MODERATOR:
-        return await SQLAlchemyUserRepository(db_session).get_users(
-            page=page,
-            limit=limit,
-            filter_by_name=filter_by_name,
+        return await SQLAlchemyUserRepository(kwargs.get("db_session")).get_users(
+            page=kwargs.get("page"),
+            limit=kwargs.get("limit"),
+            filter_by_name=kwargs.get("filter_by_name"),
             filter_by_group_id=payload.group_id,
-            sort_by=sort_by,
-            order_by=order_by,
+            sort_by=kwargs.get("sort_by"),
+            order_by=kwargs.get("order_by"),
         )
     else:
         raise HTTPException(

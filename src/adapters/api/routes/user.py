@@ -47,7 +47,13 @@ async def get_users(
     db_session: AsyncSession = Depends(get_async_session),
 ):
     return await get_users_for_admin_and_moderator(
-        page, limit, filter_by_name, sort_by, order_by, db_session, token.credentials
+        page=page,
+        limit=limit,
+        filter_by_name=filter_by_name,
+        sort_by=sort_by,
+        order_by=order_by,
+        db_session=db_session,
+        token=token.credentials,
     )
 
 
