@@ -1,0 +1,66 @@
+name: build_and_tests
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create dotenv files
+        run: |
+          echo "${{secrets.ENV_FILE}}" > .env
+
+      - name: Build app container
+        run: |
+          docker build user-management-service-app:latest .
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: "3.12"
+
+      - name: Install pipenv
+        run: |
+          python -m pip install
+
+      - name: Install pipenv dependencies
+        uses: VaultVulp/action-pipenv@v2.0.1
+        with:
+          command: pipenv install --dev
+
+      - name: Run pre-commit
+        run: |
+          pipenv run pre-commit run --all-files
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pipenv
+        run: |
+          python -m pip install
+
+      - name: Install pipenv dependencies
+        uses: VaultVulp/action-pipenv@v2.0.1
+        with:
+          command: pipenv install
+
+      - name: Create dotenv files
+        run: |
+          echo "${{secrets.ENV_FILE}}" > .env
+
+      - name: Run tests
+        run: pipenv run pytest tests/unit
