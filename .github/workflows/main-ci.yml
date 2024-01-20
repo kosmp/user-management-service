@@ -14,7 +14,7 @@ jobs:
 
       - name: Build app container
         run: |
-          docker build user-management-service-app:latest .
+          docker build -t user-management-service-app:latest .
   lint:
     runs-on: ubuntu-latest
     steps:
