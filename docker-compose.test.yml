@@ -1,0 +1,77 @@
+services:
+  app-rabbitmq:
+    image: rabbitmq:3.12.12-management
+    container_name: app-rabbitmq
+    hostname: rabbit
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - 15672:15672
+  app-db:
+    image: postgres:15
+    container_name: app-pg
+    restart: always
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: "test_database"
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  app-redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: ${REDIS_PORT}
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: localstack
+    hostname: localstack
+    ports:
+      - 4566:4566
+      - 8080:8080
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME=localstack
+    env_file:
+      - .env
+    volumes:
+      - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
+      - "/var/run/docker.sock:/var/run/docker.sock"
+  app:
+    platform: linux/x86-64
+    container_name: app
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/home/appuser
+    init: True
+    depends_on:
+      app-db:
+        condition: service_healthy
+      app-redis:
+        condition: service_started
+      app-rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_started
