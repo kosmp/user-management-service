@@ -52,13 +52,13 @@ jobs:
         run: |
           python -m pip install --upgrade pipenv
 
-      - name: Lock dependencies
-        run: |
-          pipenv lock
-
       - name: Install pipenv dependencies
         run: |
-          pipenv sync
+          pipenv install
+
+      - name: Install pipenv dev-packages
+        run: |
+          pipenv install -d
 
       - name: Create dotenv files
         run: |
