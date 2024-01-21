@@ -233,7 +233,7 @@ async def reset_user_password(
     payload = get_token_payload(token)
     user_id = payload.user_id
 
-    hashed_password = PasswordHasher.get_password_hash(str(new_password))
+    hashed_password = PasswordHasher.get_password_hash(new_password.password)
 
     return await SQLAlchemyUserRepository(db_session).update_password(
         user_id, hashed_password
