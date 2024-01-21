@@ -30,7 +30,6 @@ async def create_group(
     "/group/{group_id}",
     response_model=GroupResponseModel,
     dependencies=[
-        Depends(check_current_user_for_admin),
         Depends(check_curr_user_for_block_status),
     ],
 )
