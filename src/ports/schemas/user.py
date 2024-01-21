@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from fastapi import UploadFile, Form
+from fastapi import Form
 from pydantic import (
     BaseModel,
     constr,
@@ -9,10 +9,9 @@ from pydantic import (
     EmailStr,
     field_validator,
     ConfigDict,
-    Field,
 )
 
-from src.ports.schemas.group import GroupNameType
+from src.ports.schemas.group import GroupNameType, GroupResponseModel
 from src.ports.enums import Role
 from typing import Optional
 
@@ -78,6 +77,8 @@ class UserResponseModel(UserBase):
     image: Optional[str] = None
     is_blocked: bool
     modified_at: Optional[datetime] = None
+
+    group: GroupResponseModel
 
 
 class UserResponseModelWithPassword(UserResponseModel):
