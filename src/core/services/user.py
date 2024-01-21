@@ -39,6 +39,11 @@ async def authenticate_user(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
         )
 
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
+        )
+
     if not PasswordHasher.verify_password(credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
