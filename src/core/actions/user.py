@@ -220,6 +220,11 @@ async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]
 async def request_reset_user_password(email: EmailStr, db_session):
     user = await get_db_user_by_email(email, db_session)
 
+    if user.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
+        )
+
     tokens = generate_tokens(TokenData.model_validate(user))
     access_token = tokens.access_token
 
@@ -235,6 +240,11 @@ async def reset_user_password(
 ) -> UserResponseModel:
     payload = get_token_payload(token)
     user_id = payload.user_id
+
+    if payload.is_blocked:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
+        )
 
     hashed_password = PasswordHasher.get_password_hash(new_password.password)
 
