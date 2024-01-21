@@ -59,7 +59,7 @@ services:
     platform: linux/x86-64
     container_name: app
     build: .
-    command: sh -c "./src/scripts/entrypoint_migrations.sh"
+    command: sh -c "./src/scripts/entrypoint_migrations.sh && pytest tests"
     env_file:
       - .test.env
     ports:
