@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.ports.schemas.group import GroupResponseModel, CreateGroupModel, GroupNameType
@@ -13,7 +14,14 @@ async def create_db_group(
 
 
 async def get_db_group(group_id: UUID4, db_session: AsyncSession) -> GroupResponseModel:
-    return await SQLAlchemyGroupRepository(db_session).get_group(group_id)
+    group = await SQLAlchemyGroupRepository(db_session).get_group(group_id)
+
+    if group is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found.",
+        )
+    return group
 
 
 async def delete_db_group(group_id: UUID4, db_session: AsyncSession) -> UUID4:

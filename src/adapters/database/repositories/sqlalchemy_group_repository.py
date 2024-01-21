@@ -46,19 +46,12 @@ class SQLAlchemyGroupRepository(GroupRepository):
     async def get_group(self, group_id: UUID4) -> Union[GroupResponseModel, None]:
         try:
             query = select(Group).where(Group.id == str(group_id))
-            res = await self.db_session.scalar(query)
+            res = (await self.db_session.execute(query)).one_or_none()
 
-            if res is not None:
-                return GroupResponseModel(
-                    id=res.id, name=res.name, created_at=res.created_at
-                )
-            else:
-                raise NoResultFound
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Group not found.",
-            )
+            if res is None:
+                return res
+
+            return res[0]
         except InvalidRequestError as inv_req_err:
             raise InvalidRequestException
         except Exception as generic_err:

@@ -109,6 +109,9 @@ async def get_updated_db_user(
             detail="User not found.",
         )
 
+    if update_data.group_id is not None:
+        await get_db_group(update_data.group_id, db_session)
+
     image_url = None
     if image_file is not None:
         if user.image is not None and await validate_file(image_file):
