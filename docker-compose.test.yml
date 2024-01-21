@@ -24,9 +24,9 @@ services:
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_DB: test-user-management-service
     healthcheck:
-      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d test-user-management-service'" ]
       interval: 10s
       timeout: 3s
       retries: 3
