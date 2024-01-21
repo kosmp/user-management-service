@@ -37,11 +37,11 @@ class SignUpModel:
     email: EmailStr = Form()
     username: str = Form()
     phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$")
-    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    name: str = Form(min_length=1, max_length=15, default=None)
+    surname: str = Form(min_length=1, max_length=15, default=None)
     password: str = Form(min_length=8)
-    group_id: Optional[UUID4] = Form(default=None)
-    group_name: Optional[GroupNameType] = Form(default=None)
+    group_id: UUID4 = Form(default=None)
+    group_name: GroupNameType = Form(default=None)
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -102,24 +102,24 @@ class UserUpdateModelWithImage(UserUpdateModelWithoutImage):
 
 @dataclass
 class UserUpdateRequestModelWithoutImage:
-    email: Optional[EmailStr] = Form(default=None)
-    username: Optional[str] = Form(default=None)
-    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
-    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    group_id: Optional[UUID4] = Form(default=None)
-    is_blocked: Optional[bool] = Form(default=None)
-    role: Optional[Role] = Form(default=None)
+    email: EmailStr = Form(default=None)
+    username: str = Form(default=None)
+    phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
+    name: str = Form(min_length=1, max_length=15, default=None)
+    surname: str = Form(min_length=1, max_length=15, default=None)
+    group_id: UUID4 = Form(default=None)
+    is_blocked: bool = Form(default=None)
+    role: Role = Form(default=None)
 
 
 @dataclass
 class UserUpdateMeRequestModel:
-    email: Optional[EmailStr] = Form(default=None)
-    username: Optional[str] = Form(default=None)
-    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
-    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    group_id: Optional[UUID4] = Form(default=None)
+    email: EmailStr = Form(default=None)
+    username: str = Form(default=None)
+    phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
+    name: str = Form(min_length=1, max_length=15, default=None)
+    surname: str = Form(min_length=1, max_length=15, default=None)
+    group_id: UUID4 = Form(default=None)
 
 
 class TokenData(BaseModel):
