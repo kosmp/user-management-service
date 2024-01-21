@@ -35,7 +35,7 @@ class UserCreateModel(UserBase):
 @dataclass
 class SignUpModel:
     email: EmailStr = Form()
-    username: str = Form()
+    username: str = Form(pattern=r"^[a-zA-Z0-9_]+$")
     phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$")
     name: str = Form(min_length=1, max_length=15, default=None)
     surname: str = Form(min_length=1, max_length=15, default=None)
@@ -86,7 +86,7 @@ class UserResponseModelWithPassword(UserResponseModel):
 
 class UserUpdateModelWithoutImage(BaseModel):
     email: Optional[EmailStr] = None
-    username: Optional[str] = None
+    username: Optional[constr(pattern=r"^[a-zA-Z0-9_]+$")] = None
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
     phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
@@ -103,7 +103,7 @@ class UserUpdateModelWithImage(UserUpdateModelWithoutImage):
 @dataclass
 class UserUpdateRequestModelWithoutImage:
     email: EmailStr = Form(default=None)
-    username: str = Form(default=None)
+    username: str = Form(pattern=r"^[a-zA-Z0-9_]+$", default=None)
     phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
     name: str = Form(min_length=1, max_length=15, default=None)
     surname: str = Form(min_length=1, max_length=15, default=None)
@@ -115,7 +115,7 @@ class UserUpdateRequestModelWithoutImage:
 @dataclass
 class UserUpdateMeRequestModel:
     email: EmailStr = Form(default=None)
-    username: str = Form(default=None)
+    username: str = Form(pattern=r"^[a-zA-Z0-9_]+$", default=None)
     phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
     name: str = Form(min_length=1, max_length=15, default=None)
     surname: str = Form(min_length=1, max_length=15, default=None)
