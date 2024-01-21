@@ -34,8 +34,6 @@ async def validate_file(file: UploadFile) -> bool:
 
 
 async def upload_image(image_file: UploadFile, key: str) -> str:
-    await validate_file(image_file)
-
     contents = await image_file.read()
 
     image_hash = hashlib.md5()

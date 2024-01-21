@@ -29,7 +29,7 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
 )
 from src.core.services.token import generate_tokens
-from src.core.services.file_service import upload_image, delete_old_image
+from src.core.services.file_service import upload_image, delete_old_image, validate_file
 
 
 async def create_user(
@@ -111,9 +111,9 @@ async def get_updated_db_user(
 
     image_url = None
     if image_file is not None:
-        if user.image is not None:
+        if user.image is not None and await validate_file(image_file):
             await delete_old_image(user.image)
-        image_url = await upload_image(image_file, update_data.username)
+        image_url = await upload_image(image_file, str(user_id))
 
     update_model = update_data.model_dump()
     update_model.update({"image": image_url})
