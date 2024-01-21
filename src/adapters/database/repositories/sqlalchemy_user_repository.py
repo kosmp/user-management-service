@@ -73,6 +73,9 @@ class SQLAlchemyUserRepository(UserRepository):
 
             res = (await self.db_session.execute(query)).one_or_none()
 
+            if res is None:
+                return res
+
             return res[0]
         except InvalidRequestError as inv_req_err:
             raise InvalidRequestException
