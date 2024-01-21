@@ -55,7 +55,7 @@ async def request_reset_password(
     return await request_reset_user_password(email, db_session)
 
 
-@router.put("/auth/reset-password")
+@router.put("/auth/reset-password", response_model=UserResponseModel)
 async def reset_password(
     new_password: PasswordModel,
     token: str,

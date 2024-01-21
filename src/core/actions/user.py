@@ -229,9 +229,9 @@ async def request_reset_user_password(email: EmailStr, db_session):
 
 async def reset_user_password(
     token: str, new_password: PasswordModel, db_session: AsyncSession
-):
+) -> UserResponseModel:
     payload = get_token_payload(token)
-    user_id = payload.get("user_id")
+    user_id = payload.user_id
 
     hashed_password = PasswordHasher.get_password_hash(str(new_password))
 

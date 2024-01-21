@@ -160,7 +160,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = (
                 update(User)
                 .where(User.id == str(user_id))
-                .values(password)
+                .values(password=password)
                 .returning(User)
             )
             res = (await self.db_session.execute(query)).scalar_one_or_none()
