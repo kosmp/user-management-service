@@ -24,9 +24,9 @@ services:
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: test-user-management-service
+      POSTGRES_DB: ${DB_DATABASE_NAME}
     healthcheck:
-      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d test-user-management-service'" ]
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -51,7 +51,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - HOSTNAME=localstack
     env_file:
-      - .env
+      - .test.env
     volumes:
       - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -59,8 +59,9 @@ services:
     platform: linux/x86-64
     container_name: app
     build: .
+    command: sh -c "./src/scripts/entrypoint_migrations.sh"
     env_file:
-      - .env
+      - .test.env
     ports:
       - "8000:8000"
     volumes:
