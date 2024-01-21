@@ -99,7 +99,7 @@ class SQLAlchemyUserRepository(UserRepository):
             query = select(User)
 
             if filter_by_group_id is not None:
-                query = query.where(User.group_id.ilike(f"%{filter_by_group_id}"))
+                query = query.where(User.group_id == filter_by_group_id)
 
             if filter_by_name is not None:
                 query = query.where(User.name.ilike(f"%{filter_by_name}%"))
