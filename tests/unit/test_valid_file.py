@@ -2,6 +2,7 @@ from unittest.mock import patch, AsyncMock
 
 import pytest
 from fastapi import UploadFile, HTTPException, status
+from starlette.datastructures import Headers
 
 from src.ports.enums import SupportedFileTypes
 from src.core.services.file_service import validate_file
@@ -14,7 +15,7 @@ def valid_file(tmp_path):
     return UploadFile(
         filename="test.png",
         file=file_path.open("rb"),
-        headers={"content-type": SupportedFileTypes.PNG},
+        headers=Headers({"content-type": SupportedFileTypes.PNG}),
     )
 
 
@@ -25,7 +26,7 @@ def invalid_size_file(tmp_path):
     return UploadFile(
         filename="test.png",
         file=file_path.open("rb"),
-        headers={"content-type": SupportedFileTypes.PNG},
+        headers=Headers({"content-type": SupportedFileTypes.PNG}),
     )
 
 
