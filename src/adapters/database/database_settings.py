@@ -10,7 +10,7 @@ Base = declarative_base()
 
 database_url = URL.create(**settings.get_db_creds)
 
-async_engine = create_async_engine(database_url, echo=True)
+async_engine = create_async_engine(database_url)
 
 async_session = async_sessionmaker(bind=async_engine, expire_on_commit=False)
 
