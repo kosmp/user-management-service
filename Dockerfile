@@ -13,5 +13,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /home/appuser
 
 RUN chmod +x src/scripts/entrypoint_migrations.sh
-
-ENTRYPOINT ["src/scripts/entrypoint_migrations.sh"]

@@ -4,8 +4,6 @@ services:
     container_name: app-rabbitmq
     hostname: rabbit
     restart: always
-    volumes:
-      - .local/services/rabbitmq:/var/lib/rabbitmq/mnesia/
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
@@ -23,8 +21,6 @@ services:
     restart: always
     ports:
       - "${DB_PORT}:5432"
-    volumes:
-      - .local/services/db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -39,8 +35,6 @@ services:
     restart: always
     ports:
       - "${REDIS_PORT}:6379"
-    volumes:
-      - .local/services/redis:/data
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
@@ -53,22 +47,21 @@ services:
       - 8080:8080
     environment:
       - SERVICES=s3
-      - DEBUG=${DEBUG- }
+      - DEBUG=0
       - DOCKER_HOST=unix:///var/run/docker.sock
       - HOSTNAME=localstack
     env_file:
-      - .env
+      - .test.env
     volumes:
       - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
-      - .local/services/localstack-data:/var/lib/localstack
       - "/var/run/docker.sock:/var/run/docker.sock"
   app:
     platform: linux/x86-64
     container_name: app
     build: .
-    entrypoint: sh -c "./src/scripts/entrypoint_migrations.sh"
+    command: sh -c "./src/scripts/entrypoint_migrations.sh && pytest tests"
     env_file:
-      - .env
+      - .test.env
     ports:
       - "8000:8000"
     volumes:
