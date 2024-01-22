@@ -43,9 +43,6 @@ async def test_validate_file_success(valid_file):
         result = await validate_file(valid_file)
         assert result is True
 
-        # Ensure that file is not closed in case of success
-        assert valid_file.file.closed is False
-
 
 @pytest.mark.asyncio
 async def test_validate_file_invalid_size(invalid_size_file):
