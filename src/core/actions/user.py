@@ -4,6 +4,9 @@ from typing import List, Union
 from fastapi import HTTPException, status, UploadFile
 from pydantic import UUID4, EmailStr
 
+from src.adapters.database.repositories.sqlalchemy_group_repository import (
+    SQLAlchemyGroupRepository,
+)
 from src.core.services.pika_client import pika_client_instance
 from src.adapters.database.redis_connection import redis_client
 from src.core import settings
@@ -46,7 +49,9 @@ async def create_user(
 
     if group_id is None and user_data.group_name is not None:
         group_id = (
-            await create_db_group(user_data.group_name, db_session=db_session)
+            await SQLAlchemyGroupRepository(db_session).create_group(
+                user_data.group_name
+            )
         ).id
     elif group_id is None and user_data.group_name is None:
         raise HTTPException(
@@ -226,7 +231,14 @@ async def request_reset_user_password(email: EmailStr, db_session):
             status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
         )
 
-    tokens = generate_tokens(TokenData.model_validate(user))
+    tokens = generate_tokens(
+        TokenData(
+            user_id=str(user.id),
+            role=user.role,
+            group_id=str(user.group_id),
+            is_blocked=user.is_blocked,
+        )
+    )
     access_token = tokens.access_token
 
     reset_link = f"${settings.api_url}/reset-password?token={access_token}"

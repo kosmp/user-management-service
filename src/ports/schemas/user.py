@@ -78,8 +78,6 @@ class UserResponseModel(UserBase):
     is_blocked: bool
     modified_at: Optional[datetime] = None
 
-    group: GroupResponseModel
-
 
 class UserResponseModelWithPassword(UserResponseModel):
     password: str
