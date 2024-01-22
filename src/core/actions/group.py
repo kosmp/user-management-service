@@ -10,7 +10,10 @@ from src.adapters.database.repositories.sqlalchemy_group_repository import (
 async def create_db_group(
     group_name: GroupNameType, db_session: AsyncSession
 ) -> GroupResponseModel:
-    return await SQLAlchemyGroupRepository(db_session).create_group(group_name)
+    group = await SQLAlchemyGroupRepository(db_session).create_group(group_name)
+    await db_session.commit()
+
+    return group
 
 
 async def get_db_group(group_id: UUID4, db_session: AsyncSession) -> GroupResponseModel:
