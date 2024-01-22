@@ -30,11 +30,15 @@ async def validate_file(file: UploadFile) -> bool:
             detail="Supported file types are png and jpeg.",
         )
 
+    await file.close()
+
     return True
 
 
 async def upload_image(image_file: UploadFile, key: str) -> str:
     contents = await image_file.read()
+
+    await image_file.close()
 
     image_hash = hashlib.md5()
     image_hash.update(contents)
