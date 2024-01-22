@@ -4,6 +4,8 @@ from datetime import datetime
 import pika
 from pika.credentials import PlainCredentials
 
+from src.core import settings
+
 
 class PikaClient:
     def __init__(
@@ -48,3 +50,12 @@ class PikaClient:
 
     def __del__(self):
         self.connection.close()
+
+
+pika_client_instance = PikaClient(
+    rabbitmq_host=settings.rabbitmq_host,
+    rabbitmq_port=settings.rabbitmq_port,
+    rabbitmq_vhost=settings.rabbitmq_vhost,
+    rabbitmq_default_user=settings.rabbitmq_default_user,
+    rabbitmq_default_pass=settings.rabbitmq_default_pass,
+)

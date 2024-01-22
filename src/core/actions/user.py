@@ -4,8 +4,9 @@ from typing import List, Union
 from fastapi import HTTPException, status, UploadFile
 from pydantic import UUID4, EmailStr
 
+from src.core.services.pika_client import pika_client_instance
 from src.adapters.database.redis_connection import redis_client
-from src.core import settings, pika_client_instance
+from src.core import settings
 from src.ports.enums import Role
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
