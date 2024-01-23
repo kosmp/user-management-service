@@ -60,6 +60,7 @@ async def create_user(
 
     hashed_password = PasswordHasher.get_password_hash(user_data.password)
 
+    await validate_file(image_file)
     user_data_dict = user_data.__dict__
     user_data_dict.update(
         {
