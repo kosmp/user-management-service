@@ -8,10 +8,12 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import mapped_column, relationship
-
-from src.adapters.database.database_settings import Base
+from sqlalchemy.orm import mapped_column, relationship, DeclarativeBase
 from src.ports.enums import Role
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 class User(Base):
