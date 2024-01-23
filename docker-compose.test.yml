@@ -55,11 +55,11 @@ services:
     volumes:
       - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
       - "/var/run/docker.sock:/var/run/docker.sock"
-  app:
+  test-app:
     platform: linux/x86-64
-    container_name: app
+    container_name: test-app
     build: .
-    command: sh -c "./src/scripts/entrypoint_migrations.sh && pytest tests"
+    entrypoint: sh -c "./src/scripts/entrypoint_tests.sh"
     env_file:
       - .test.env
     ports:
