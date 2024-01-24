@@ -62,11 +62,8 @@ services:
     entrypoint: sh -c "./src/scripts/entrypoint_tests.sh"
     env_file:
       - .test.env
-    ports:
-      - "8000:8000"
     volumes:
       - .:/home/appuser
-    init: True
     depends_on:
       app-db:
         condition: service_healthy

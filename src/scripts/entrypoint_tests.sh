@@ -4,5 +4,6 @@ python -m src.scripts.create_admin
 
 python -m pip install pytest==7.4.4
 python -m pip install pytest_asyncio==0.23.3
+python -m pip install httpx==0.26.0
 
-uvicorn src.main:app --host 0.0.0.0 --reload
+python -m pytest
