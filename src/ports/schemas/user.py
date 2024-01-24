@@ -12,7 +12,7 @@ from pydantic import (
 )
 
 from src.ports.schemas.group import GroupNameType, GroupResponseModel
-from src.ports.enums import Role
+from src.ports.enums import Role, TokenType
 from typing import Optional
 
 
@@ -126,6 +126,10 @@ class TokenData(BaseModel):
     role: str
     group_id: str
     is_blocked: bool
+
+
+class TokenDataWithTokenType(TokenData):
+    token_type: TokenType
 
 
 class TokensResult(BaseModel):

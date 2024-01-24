@@ -61,6 +61,6 @@ async def get_current_user_from_token(
     user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
 
     if user is None:
-        raise CredentialsException
+        raise CredentialsException()
 
     return user

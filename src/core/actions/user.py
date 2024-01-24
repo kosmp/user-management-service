@@ -4,13 +4,14 @@ from typing import List, Union
 from fastapi import HTTPException, status, UploadFile
 from pydantic import UUID4, EmailStr
 
+from src.core.exceptions import CredentialsException
 from src.adapters.database.repositories.sqlalchemy_group_repository import (
     SQLAlchemyGroupRepository,
 )
 from src.core.services.pika_client import pika_client_instance
 from src.adapters.database.redis_connection import redis_client
 from src.core import settings
-from src.ports.enums import Role
+from src.ports.enums import Role, TokenType
 from src.core.actions.group import get_db_group, create_db_group
 from src.core.services.hasher import PasswordHasher
 from src.core.services.token import get_token_payload
@@ -174,7 +175,7 @@ async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
     return await SQLAlchemyUserRepository(db_session).delete_user(user_id)
 
 
-async def get_refresh_token(refresh_token, db_session: AsyncSession) -> TokensResult:
+async def refresh_tokens(refresh_token, db_session: AsyncSession) -> TokensResult:
     if redis_client.get(str(refresh_token)) is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -182,6 +183,9 @@ async def get_refresh_token(refresh_token, db_session: AsyncSession) -> TokensRe
         )
 
     token_payload = get_token_payload(refresh_token)
+
+    if token_payload.token_type != TokenType.REFRESH:
+        raise CredentialsException("Invalid token type. It's not a refresh token.")
 
     # check if user with user_id exists
     await get_db_user_by_id(user_id=token_payload.user_id, db_session=db_session)

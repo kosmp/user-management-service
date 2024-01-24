@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, UploadFile, File
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.permissions import check_curr_user_for_block_status
-from src.core.actions.user import create_user, login_user, get_refresh_token
+from src.core.actions.user import create_user, login_user, refresh_tokens
 from src.ports.schemas.user import (
     SignUpModel,
     UserResponseModel,
@@ -45,7 +44,7 @@ async def refresh_token(
     token: str,
     db_session: AsyncSession = Depends(get_async_session),
 ):
-    return await get_refresh_token(token, db_session)
+    return await refresh_tokens(token, db_session)
 
 
 @router.post("/auth/request-password-reset")
