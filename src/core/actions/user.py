@@ -242,7 +242,7 @@ async def request_reset_user_password(email: EmailStr, db_session):
     )
     access_token = tokens.access_token
 
-    reset_link = f"${settings.api_url}/reset-password?token={access_token}"
+    reset_link = f"{settings.http_schema}://{settings.host}:{settings.port}/reset-password?token={access_token}"
 
     pika_client_instance.send_message(str(email), reset_link, "reset-password-stream")
 
