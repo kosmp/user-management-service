@@ -9,32 +9,32 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
-      interval: 10s
-      timeout: 10s
+      interval: 5s
+      timeout: 5s
       retries: 10
-    ports:
-      - "${RABBITMQ_PORT}:5672"
-      - 15672:15672
+    expose:
+      - "${RABBITMQ_PORT}"
+      - 15672
   app-db:
     image: postgres:15
     container_name: app-pg
     restart: always
-    ports:
-      - "${DB_PORT}:5432"
+    expose:
+      - "${DB_PORT}"
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
-      interval: 10s
+      interval: 4s
       timeout: 3s
       retries: 3
   app-redis:
     image: redis:7
     restart: always
-    ports:
-      - "${REDIS_PORT}:6379"
+    expose:
+      - "${REDIS_PORT}"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
@@ -42,9 +42,9 @@ services:
     image: localstack/localstack:3.0
     container_name: localstack
     hostname: localstack
-    ports:
-      - 4566:4566
-      - 8080:8080
+    expose:
+      - 4566
+      - 8080
     environment:
       - SERVICES=s3
       - DEBUG=0
