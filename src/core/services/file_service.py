@@ -30,8 +30,6 @@ async def validate_file(file: UploadFile) -> bool:
             detail="Supported file types are png and jpeg.",
         )
 
-    await file.close()
-
     return True
 
 
