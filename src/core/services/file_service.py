@@ -8,6 +8,9 @@ from src.ports.enums import SupportedFileTypes
 
 
 async def validate_file(file: UploadFile) -> bool:
+    if file is None:
+        return False
+
     contents = await file.read()
     size = len(contents)
     if not 0 < size < 1024 * 1024:
