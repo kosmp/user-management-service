@@ -21,7 +21,7 @@ def get_token_payload(token: str) -> TokenData:
 
 def generate_token(payload: TokenData, expires_delta: timedelta) -> str:
     to_encode = payload.model_dump()
-    to_encode.update({"exp": datetime.utcnow() + expires_delta})
+    to_encode.update({"exp": datetime.now() + expires_delta})
 
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
