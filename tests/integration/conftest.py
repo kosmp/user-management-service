@@ -1,17 +1,22 @@
-import asyncio
+import json
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 from sqlalchemy import NullPool
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
+from ports.schemas.user import SignUpModel, CredentialsModel
 from src.adapters.database.database_settings import get_async_session
 from src.main import app
 from src.adapters.database.models.groups import Group
 from src.adapters.database.models.users import User
 from src.core import settings
+
+
+def serialize(binary: bytes):
+    return json.loads(binary.decode("utf-8"))
 
 
 @pytest.fixture(scope="function")
@@ -23,7 +28,7 @@ def engine():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def create(engine):
+async def refresh_tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(User.metadata.drop_all)
         await conn.run_sync(User.metadata.create_all)
@@ -33,7 +38,7 @@ async def create(engine):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def get_test_async_session(engine, create):
+async def get_test_async_session(engine, refresh_tables):
     async with AsyncSession(engine) as session:
         yield session
 
@@ -64,3 +69,59 @@ def test_user_dict_1():
         group_id=None,
         group_name="example",
     )
+
+
+@pytest.fixture()
+def test_user_dict_2():
+    return dict(
+        email="test@mail.ru",
+        username="example1",
+        phone_number="123451",
+        name="Example",
+        surname="Example",
+        password="1234567Psg",
+        group_id=None,
+        group_name="test group 1",
+    )
+
+
+@pytest.fixture()
+def test_user_dict_3():
+    return dict(
+        email="test@mail.ru",
+        username="example2",
+        phone_number="123452",
+        name="Example",
+        surname="Example",
+        password="1234567Psg",
+        group_id=None,
+        group_name="test group 2",
+    )
+
+
+@pytest.fixture()
+def test_user_dict_4():
+    return dict(
+        email="abcde@mail.ru",
+        username="abcde",
+        phone_number="66666",
+        name="Example",
+        surname="Example",
+        password="1234567Psg",
+        group_id=None,
+        group_name="test group 3",
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def login_success(
+    test_client: AsyncClient, test_user_dict_4, refresh_tables
+) -> Response:
+    signup_data = SignUpModel(**test_user_dict_4)
+    login_data = CredentialsModel(
+        login=test_user_dict_4.get("username"),
+        password=test_user_dict_4.get("password"),
+    )
+
+    await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
+    return await test_client.post("/v1/auth/login", json=login_data.model_dump())
