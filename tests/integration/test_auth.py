@@ -1,7 +1,23 @@
+from datetime import timedelta
+
 import pytest
-from httpx import AsyncClient, Response
-from src.ports.schemas.user import SignUpModel, CredentialsModel
+from httpx import AsyncClient
+
+from src.ports.enums import TokenType
+from src.core.services.token import generate_token
+from src.ports.schemas.user import (
+    SignUpModel,
+    CredentialsModel,
+    TokenDataWithTokenType,
+    UserCreateModel,
+)
 from conftest import serialize
+from src.adapters.database.repositories.sqlalchemy_user_repository import (
+    SQLAlchemyUserRepository,
+)
+from src.adapters.database.repositories.sqlalchemy_group_repository import (
+    SQLAlchemyGroupRepository,
+)
 
 
 @pytest.mark.asyncio
@@ -41,9 +57,9 @@ async def test_auth_signup_email_exists(
 
 @pytest.mark.asyncio
 async def test_auth_login_success(
-    test_client: AsyncClient, test_user_dict_4, login_success
+    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
 ):
-    response = login_success
+    response = create_user_and_login_success
 
     assert response.status_code == 200
 
@@ -81,8 +97,10 @@ async def test_auth_login_with_invalid_login(
 
 
 @pytest.mark.asyncio
-async def test_auth_refresh_token_endpoint(test_client: AsyncClient, login_success):
-    response_login = login_success
+async def test_auth_refresh_token_endpoint(
+    test_client: AsyncClient, create_user_and_login_success
+):
+    response_login = create_user_and_login_success
 
     refresh_token: str or None = None
     if response_login.status_code == 200:
@@ -97,9 +115,9 @@ async def test_auth_refresh_token_endpoint(test_client: AsyncClient, login_succe
 
 @pytest.mark.asyncio
 async def test_auth_refresh_endpoint_using_access_token(
-    test_client: AsyncClient, login_success
+    test_client: AsyncClient, create_user_and_login_success
 ):
-    response_login = login_success
+    response_login = create_user_and_login_success
 
     access_token: str or None = None
 
@@ -111,3 +129,83 @@ async def test_auth_refresh_endpoint_using_access_token(
     )
 
     assert response_refresh.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_auth_request_reset_password_success(
+    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+):
+    email = test_user_dict_4.get("email")
+
+    response = await test_client.post(
+        "/v1/auth/request-password-reset", params={"email": email}
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_auth_request_reset_password_with_not_existed_email(
+    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+):
+    email = test_user_dict_4.get("email")
+
+    response = await test_client.post(
+        "/v1/auth/request-password-reset", params={"email": email}
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_auth_request_reset_password_with_not_existed_email(
+    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+):
+    email = "ab" + test_user_dict_4.get("email")
+
+    response = await test_client.post(
+        "/v1/auth/request-password-reset", params={"email": email}
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_auth_reset_password(
+    test_client: AsyncClient, get_test_async_session, test_user_dict_4, refresh_tables
+):
+    group = await SQLAlchemyGroupRepository(get_test_async_session).create_group(
+        group_name="test"
+    )
+    user = await SQLAlchemyUserRepository(get_test_async_session).create_user(
+        UserCreateModel(
+            email=test_user_dict_4.get("email"),
+            username=test_user_dict_4.get("username"),
+            phone_number=test_user_dict_4.get("phone_number"),
+            group_id=group.id,
+            password="testHashedPassword",
+        )
+    )
+
+    test_refresh_token = generate_token(
+        payload=TokenDataWithTokenType(
+            token_type=TokenType.REFRESH,
+            user_id=str(user.id),
+            role=user.role,
+            group_id=str(user.group_id),
+            is_blocked=user.is_blocked,
+        ),
+        expires_delta=timedelta(minutes=5),
+    )
+
+    response = await test_client.put(
+        "/v1/auth/reset-password",
+        params={"token": test_refresh_token},
+        json={"password": "1234567Psg"},
+    )
+
+    user = await SQLAlchemyUserRepository(get_test_async_session).get_user(
+        user_id=user.id
+    )
+
+    assert response.status_code == 200 and user.password != "testHashedPassword"

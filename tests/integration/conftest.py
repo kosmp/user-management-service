@@ -114,7 +114,7 @@ def test_user_dict_4():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def login_success(
+async def create_user_and_login_success(
     test_client: AsyncClient, test_user_dict_4, refresh_tables
 ) -> Response:
     signup_data = SignUpModel(**test_user_dict_4)
