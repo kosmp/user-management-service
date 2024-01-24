@@ -21,7 +21,7 @@ from src.adapters.database.repositories.sqlalchemy_group_repository import (
 
 
 @pytest.mark.asyncio
-async def test_auth_signup(test_client: AsyncClient, test_user_dict_1, refresh_tables):
+async def test_auth_signup(test_client: AsyncClient, test_user_dict_1):
     signup_data = SignUpModel(**test_user_dict_1)
 
     response = await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
@@ -31,7 +31,7 @@ async def test_auth_signup(test_client: AsyncClient, test_user_dict_1, refresh_t
 
 @pytest.mark.asyncio
 async def test_auth_signup_email_exists(
-    test_client: AsyncClient, test_user_dict_2, test_user_dict_3, refresh_tables
+    test_client: AsyncClient, test_user_dict_2, test_user_dict_3
 ):
     signup_data_1 = SignUpModel(**test_user_dict_2)
     signup_data_2 = SignUpModel(**test_user_dict_3)
@@ -43,9 +43,7 @@ async def test_auth_signup_email_exists(
 
 
 @pytest.mark.asyncio
-async def test_auth_signup_email_exists(
-    test_client: AsyncClient, test_user_dict_1, refresh_tables
-):
+async def test_auth_signup_email_exists(test_client: AsyncClient, test_user_dict_1):
     signup_data_1 = SignUpModel(**test_user_dict_1)
     signup_data_2 = SignUpModel(**test_user_dict_1)
 
@@ -65,9 +63,7 @@ async def test_auth_login_success(
 
 
 @pytest.mark.asyncio
-async def test_auth_login_with_wrong_pass(
-    test_client: AsyncClient, test_user_dict_4, refresh_tables
-):
+async def test_auth_login_with_wrong_pass(test_client: AsyncClient, test_user_dict_4):
     signup_data = SignUpModel(**test_user_dict_4)
     password = test_user_dict_4.get("password") + "123"
     login_data = CredentialsModel(
@@ -82,7 +78,7 @@ async def test_auth_login_with_wrong_pass(
 
 @pytest.mark.asyncio
 async def test_auth_login_with_invalid_login(
-    test_client: AsyncClient, test_user_dict_4, refresh_tables
+    test_client: AsyncClient, test_user_dict_4
 ):
     signup_data = SignUpModel(**test_user_dict_4)
     login = "ab" + test_user_dict_4.get("username")
@@ -172,7 +168,7 @@ async def test_auth_request_reset_password_with_not_existed_email(
 
 @pytest.mark.asyncio
 async def test_auth_reset_password(
-    test_client: AsyncClient, get_test_async_session, test_user_dict_4, refresh_tables
+    test_client: AsyncClient, get_test_async_session, test_user_dict_4
 ):
     group = await SQLAlchemyGroupRepository(get_test_async_session).create_group(
         group_name="test"
