@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 import pytest
 import pytest_asyncio
@@ -7,7 +8,21 @@ from sqlalchemy import NullPool
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from ports.schemas.user import SignUpModel, CredentialsModel
+from src.core.services.token import generate_token
+from src.ports.enums import TokenType, Role
+from src.adapters.database.repositories.sqlalchemy_user_repository import (
+    SQLAlchemyUserRepository,
+)
+from src.adapters.database.repositories.sqlalchemy_group_repository import (
+    SQLAlchemyGroupRepository,
+)
+from src.ports.schemas.user import (
+    SignUpModel,
+    CredentialsModel,
+    UserCreateModel,
+    TokenDataWithTokenType,
+    UserResponseModel,
+)
 from src.adapters.database.database_settings import get_async_session
 from src.main import app
 from src.adapters.database.models.groups import Group
@@ -58,7 +73,7 @@ async def test_client(get_test_async_session):
 
 
 @pytest.fixture()
-def test_user_dict_1():
+def test_user_sign_up_dict():
     return dict(
         email="example@mail.ru",
         username="example",
@@ -72,7 +87,7 @@ def test_user_dict_1():
 
 
 @pytest.fixture()
-def test_user_dict_2():
+def test_user_sign_up_dict_2():
     return dict(
         email="test@mail.ru",
         username="example1",
@@ -86,7 +101,7 @@ def test_user_dict_2():
 
 
 @pytest.fixture()
-def test_user_dict_3():
+def test_user_sign_up_dict_3():
     return dict(
         email="test@mail.ru",
         username="example2",
@@ -100,7 +115,7 @@ def test_user_dict_3():
 
 
 @pytest.fixture()
-def test_user_dict_4():
+def test_user_dict_user():
     return dict(
         email="abcde@mail.ru",
         username="abcde",
@@ -109,19 +124,117 @@ def test_user_dict_4():
         surname="Example",
         password="1234567Psg",
         group_id=None,
-        group_name="test group 3",
+        group_name="test 1",
+        role=Role.USER,
+    )
+
+
+@pytest.fixture()
+def test_user_dict_admin():
+    return dict(
+        email="test_user_email@mail.ru",
+        username="useruser",
+        phone_number="32632",
+        name="Example",
+        surname="Example",
+        password="1234567Psg",
+        group_id=None,
+        group_name="test 2",
+        role=Role.ADMIN,
+    )
+
+
+@pytest.fixture()
+def test_user_dict_moderator():
+    return dict(
+        email="test_moderator_email@mail.ru",
+        username="moderatormoderator",
+        phone_number="5475475",
+        name="Example",
+        surname="Example",
+        password="1234567Psg",
+        group_id=None,
+        group_name="test 3",
+        role=Role.MODERATOR,
     )
 
 
 @pytest_asyncio.fixture(scope="function")
 async def create_user_and_login_success(
-    test_client: AsyncClient, test_user_dict_4, refresh_tables
+    test_client: AsyncClient, test_user_sign_up_dict, refresh_tables
 ) -> Response:
-    signup_data = SignUpModel(**test_user_dict_4)
+    signup_data = SignUpModel(**test_user_sign_up_dict)
     login_data = CredentialsModel(
-        login=test_user_dict_4.get("username"),
-        password=test_user_dict_4.get("password"),
+        login=test_user_sign_up_dict.get("username"),
+        password=test_user_sign_up_dict.get("password"),
     )
 
     await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
     return await test_client.post("/v1/auth/login", json=login_data.model_dump())
+
+
+async def create_user(
+    user_model_dict: dict, group_name: str, get_test_async_session: AsyncSession
+):
+    group = await SQLAlchemyGroupRepository(get_test_async_session).create_group(
+        group_name=group_name
+    )
+    return await SQLAlchemyUserRepository(get_test_async_session).create_user(
+        UserCreateModel(
+            email=user_model_dict.get("email"),
+            username=user_model_dict.get("username"),
+            phone_number=user_model_dict.get("phone_number"),
+            group_id=group.id,
+            password="testHashedPassword",
+            role=user_model_dict.get("role"),
+        )
+    )
+
+
+@pytest_asyncio.fixture(scope="function")
+async def user_with_role_user(test_user_dict_user, get_test_async_session):
+    user = await create_user(test_user_dict_user, "test", get_test_async_session)
+    yield user
+    await SQLAlchemyUserRepository(get_test_async_session).delete_user(user_id=user.id)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def user_with_role_admin(test_user_dict_admin, get_test_async_session):
+    user = await create_user(test_user_dict_admin, "test", get_test_async_session)
+    yield user
+    await SQLAlchemyUserRepository(get_test_async_session).delete_user(user_id=user.id)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def user_with_role_moderator(test_user_dict_moderator, get_test_async_session):
+    user = await create_user(test_user_dict_moderator, "test", get_test_async_session)
+    yield user
+    await SQLAlchemyUserRepository(get_test_async_session).delete_user(user_id=user.id)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def moderator_and_user_with_different_groups(
+    test_user_dict_moderator, test_user_dict_user, get_test_async_session
+):
+    user_moderator = await create_user(
+        test_user_dict_moderator, "abc1", get_test_async_session
+    )
+    user = await create_user(test_user_dict_user, "abc2", get_test_async_session)
+    yield {"user_with_role_moderator": user_moderator, "user_with_differ_role": user}
+    await SQLAlchemyUserRepository(get_test_async_session).delete_user(
+        user_id=user_moderator.id
+    )
+    await SQLAlchemyUserRepository(get_test_async_session).delete_user(user_id=user.id)
+
+
+def jwt_access_token(user: UserResponseModel):
+    return generate_token(
+        payload=TokenDataWithTokenType(
+            token_type=TokenType.ACCESS,
+            user_id=str(user.id),
+            role=user.role,
+            group_id=str(user.group_id),
+            is_blocked=user.is_blocked,
+        ),
+        expires_delta=timedelta(minutes=5),
+    )

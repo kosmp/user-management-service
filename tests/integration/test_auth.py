@@ -21,8 +21,8 @@ from src.adapters.database.repositories.sqlalchemy_group_repository import (
 
 
 @pytest.mark.asyncio
-async def test_auth_signup(test_client: AsyncClient, test_user_dict_1):
-    signup_data = SignUpModel(**test_user_dict_1)
+async def test_auth_signup(test_client: AsyncClient, test_user_sign_up_dict):
+    signup_data = SignUpModel(**test_user_sign_up_dict)
 
     response = await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
 
@@ -31,10 +31,10 @@ async def test_auth_signup(test_client: AsyncClient, test_user_dict_1):
 
 @pytest.mark.asyncio
 async def test_auth_signup_email_exists(
-    test_client: AsyncClient, test_user_dict_2, test_user_dict_3
+    test_client: AsyncClient, test_user_sign_up_dict_2, test_user_sign_up_dict_3
 ):
-    signup_data_1 = SignUpModel(**test_user_dict_2)
-    signup_data_2 = SignUpModel(**test_user_dict_3)
+    signup_data_1 = SignUpModel(**test_user_sign_up_dict_2)
+    signup_data_2 = SignUpModel(**test_user_sign_up_dict_3)
 
     await test_client.post("/v1/auth/signup", data=signup_data_1.__dict__)
     response = await test_client.post("/v1/auth/signup", data=signup_data_2.__dict__)
@@ -43,9 +43,11 @@ async def test_auth_signup_email_exists(
 
 
 @pytest.mark.asyncio
-async def test_auth_signup_email_exists(test_client: AsyncClient, test_user_dict_1):
-    signup_data_1 = SignUpModel(**test_user_dict_1)
-    signup_data_2 = SignUpModel(**test_user_dict_1)
+async def test_auth_signup_email_exists(
+    test_client: AsyncClient, test_user_sign_up_dict
+):
+    signup_data_1 = SignUpModel(**test_user_sign_up_dict)
+    signup_data_2 = SignUpModel(**test_user_sign_up_dict)
 
     await test_client.post("/v1/auth/signup", data=signup_data_1.__dict__)
     response = await test_client.post("/v1/auth/signup", data=signup_data_2.__dict__)
@@ -55,7 +57,7 @@ async def test_auth_signup_email_exists(test_client: AsyncClient, test_user_dict
 
 @pytest.mark.asyncio
 async def test_auth_login_success(
-    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+    test_client: AsyncClient, create_user_and_login_success
 ):
     response = create_user_and_login_success
 
@@ -63,11 +65,13 @@ async def test_auth_login_success(
 
 
 @pytest.mark.asyncio
-async def test_auth_login_with_wrong_pass(test_client: AsyncClient, test_user_dict_4):
-    signup_data = SignUpModel(**test_user_dict_4)
-    password = test_user_dict_4.get("password") + "123"
+async def test_auth_login_with_wrong_pass(
+    test_client: AsyncClient, test_user_sign_up_dict
+):
+    signup_data = SignUpModel(**test_user_sign_up_dict)
+    password = test_user_sign_up_dict.get("password") + "123"
     login_data = CredentialsModel(
-        login=test_user_dict_4.get("username"), password=password
+        login=test_user_sign_up_dict.get("username"), password=password
     )
 
     await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
@@ -78,12 +82,12 @@ async def test_auth_login_with_wrong_pass(test_client: AsyncClient, test_user_di
 
 @pytest.mark.asyncio
 async def test_auth_login_with_invalid_login(
-    test_client: AsyncClient, test_user_dict_4
+    test_client: AsyncClient, test_user_sign_up_dict
 ):
-    signup_data = SignUpModel(**test_user_dict_4)
-    login = "ab" + test_user_dict_4.get("username")
+    signup_data = SignUpModel(**test_user_sign_up_dict)
+    login = "ab" + test_user_sign_up_dict.get("username")
     login_data = CredentialsModel(
-        login=login, password=test_user_dict_4.get("password")
+        login=login, password=test_user_sign_up_dict.get("password")
     )
 
     await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
@@ -129,9 +133,9 @@ async def test_auth_refresh_endpoint_using_access_token(
 
 @pytest.mark.asyncio
 async def test_auth_request_reset_password_success(
-    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+    test_client: AsyncClient, test_user_sign_up_dict, create_user_and_login_success
 ):
-    email = test_user_dict_4.get("email")
+    email = test_user_sign_up_dict.get("email")
 
     response = await test_client.post(
         "/v1/auth/request-password-reset", params={"email": email}
@@ -142,9 +146,9 @@ async def test_auth_request_reset_password_success(
 
 @pytest.mark.asyncio
 async def test_auth_request_reset_password_with_not_existed_email(
-    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+    test_client: AsyncClient, test_user_sign_up_dict, create_user_and_login_success
 ):
-    email = test_user_dict_4.get("email")
+    email = test_user_sign_up_dict.get("email")
 
     response = await test_client.post(
         "/v1/auth/request-password-reset", params={"email": email}
@@ -155,9 +159,9 @@ async def test_auth_request_reset_password_with_not_existed_email(
 
 @pytest.mark.asyncio
 async def test_auth_request_reset_password_with_not_existed_email(
-    test_client: AsyncClient, test_user_dict_4, create_user_and_login_success
+    test_client: AsyncClient, test_user_dict_user, create_user_and_login_success
 ):
-    email = "ab" + test_user_dict_4.get("email")
+    email = "ab" + test_user_dict_user.get("email")
 
     response = await test_client.post(
         "/v1/auth/request-password-reset", params={"email": email}
@@ -168,16 +172,16 @@ async def test_auth_request_reset_password_with_not_existed_email(
 
 @pytest.mark.asyncio
 async def test_auth_reset_password(
-    test_client: AsyncClient, get_test_async_session, test_user_dict_4
+    test_client: AsyncClient, get_test_async_session, test_user_dict_user
 ):
     group = await SQLAlchemyGroupRepository(get_test_async_session).create_group(
         group_name="test"
     )
     user = await SQLAlchemyUserRepository(get_test_async_session).create_user(
         UserCreateModel(
-            email=test_user_dict_4.get("email"),
-            username=test_user_dict_4.get("username"),
-            phone_number=test_user_dict_4.get("phone_number"),
+            email=test_user_dict_user.get("email"),
+            username=test_user_dict_user.get("username"),
+            phone_number=test_user_dict_user.get("phone_number"),
             group_id=group.id,
             password="testHashedPassword",
         )
