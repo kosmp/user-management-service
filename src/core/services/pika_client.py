@@ -56,7 +56,6 @@ class PikaClient:
 
     def __del__(self):
         self.connection.close()
-        logger.info("Connection with RabbitMQ closed.")
 
 
 pika_client_instance = PikaClient(
