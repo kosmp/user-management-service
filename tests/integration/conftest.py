@@ -22,6 +22,7 @@ from src.ports.schemas.user import (
     UserCreateModel,
     TokenDataWithTokenType,
     UserResponseModel,
+    TokenData,
 )
 from src.adapters.database.database_settings import get_async_session
 from src.main import app
@@ -187,7 +188,7 @@ async def create_user(
             name=user_model_dict.get("name"),
             surname=user_model_dict.get("surname"),
             group_id=group.id,
-            password="testHashedPassword",
+            password=user_model_dict.get("password"),
             role=user_model_dict.get("role"),
         )
     )
@@ -227,14 +228,14 @@ async def moderator_and_user_with_different_groups(
     await SQLAlchemyUserRepository(get_test_async_session).delete_user(user_id=user.id)
 
 
-def jwt_access_token(user: UserResponseModel):
+def jwt_token(token_payload: TokenData, token_type: TokenType = TokenType.ACCESS):
     return generate_token(
         payload=TokenDataWithTokenType(
-            token_type=TokenType.ACCESS,
-            user_id=str(user.id),
-            role=user.role,
-            group_id=str(user.group_id),
-            is_blocked=user.is_blocked,
+            token_type=token_type,
+            user_id=str(token_payload.id),
+            role=token_payload.role,
+            group_id=str(token_payload.group_id),
+            is_blocked=token_payload.is_blocked,
         ),
         expires_delta=timedelta(minutes=5),
     )
