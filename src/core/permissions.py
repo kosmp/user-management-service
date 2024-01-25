@@ -30,8 +30,7 @@ async def check_current_user_for_moderator_and_admin(
         return True
     elif role == Role.MODERATOR:
         group_id_current_user_belongs_to = get_token_payload(token).group_id
-
-        if group_id != group_id_current_user_belongs_to:
+        if str(group_id) != group_id_current_user_belongs_to:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"User with the {role} role does not have access. Belong to different groups.",
