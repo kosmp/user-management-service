@@ -32,6 +32,7 @@ class PydanticSettings(BaseSettings):
     host: str = None
     http_schema: str = None
     port: int = None
+    test_mode: bool = False
 
     @property
     def get_db_creds(self):
