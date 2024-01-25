@@ -1,4 +1,5 @@
 import logging
+from logging.config import dictConfig
 import sys
 
 LOGGING_CONFIG = {
@@ -23,6 +24,6 @@ LOGGING_CONFIG = {
 }
 
 
-logging.config.dictConfig(LOGGING_CONFIG)
+dictConfig(LOGGING_CONFIG)
 
 logger = logging.getLogger("user-management-service")
