@@ -1,5 +1,6 @@
 from fastapi.security import HTTPAuthorizationCredentials
 
+from src.logging_config import logger
 from src.core import security
 from src.adapters.database.database_settings import get_async_session
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
@@ -35,16 +36,19 @@ async def authenticate_user(
             continue
 
     if user is None:
+        logger.error(f"User with login {credentials.login} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
         )
 
     if user.is_blocked:
+        logger.error(f"User with login {credentials.login} is blocked.")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
         )
 
     if not PasswordHasher.verify_password(credentials.password, user.password):
+        logger.error("Incorrect password.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect password.",
@@ -61,6 +65,7 @@ async def get_current_user_from_token(
     user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
 
     if user is None:
-        raise CredentialsException()
+        logger.error("User with this credentials is not found.")
+        raise CredentialsException("Could not validate credentials")
 
     return user

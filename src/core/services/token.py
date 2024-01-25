@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 
 from jose import JWTError, jwt
 
+from src.logging_config import logger
 from src.ports.enums import TokenType
 from src.ports.schemas.user import TokenData, TokensResult, TokenDataWithTokenType
 from src.core.exceptions import CredentialsException
@@ -17,7 +18,8 @@ def get_token_payload(token: str) -> TokenDataWithTokenType:
         token_data = TokenDataWithTokenType(**payload)
         return token_data
     except JWTError:
-        raise CredentialsException("Invalid token. Can not be decoded.")
+        logger.error("Invalid token. Can not be decoded.")
+        raise CredentialsException("Invalid token.")
 
 
 def generate_token(payload: TokenDataWithTokenType, expires_delta: timedelta) -> str:

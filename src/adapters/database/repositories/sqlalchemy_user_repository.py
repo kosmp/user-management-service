@@ -38,15 +38,18 @@ class SQLAlchemyUserRepository(UserRepository):
             return UserResponseModel.model_validate(new_user)
         except IntegrityError as integrity_err:
             await self.db_session.rollback()
+            logger.error(f"Integrity error: {integrity_err}.")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="User already exists.",
             )
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
+            logger.error(f"Invalid request error: {inv_req_err}.")
             raise InvalidRequestException
-        except Exception as generic_err:
+        except Exception as err:
             await self.db_session.rollback()
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred while creating the user.",
@@ -78,8 +81,10 @@ class SQLAlchemyUserRepository(UserRepository):
 
             return res[0]
         except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid request error: {inv_req_err}.")
             raise InvalidRequestException
-        except Exception as generic_err:
+        except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while retrieving the user.",
@@ -119,13 +124,16 @@ class SQLAlchemyUserRepository(UserRepository):
             users = await self.db_session.scalars(query)
             return users.all()
         except AttributeError as attr_err:
+            logger.error(f"AttributeError: {attr_err}.")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid attributes.",
             )
         except InvalidRequestError as inv_req_err:
+            logger.error(f"InvalidRequestError: {inv_req_err}.")
             raise InvalidRequestException
         except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while retrieving users.",
@@ -146,8 +154,10 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
+            logger.error(f"InvalidRequestError: {inv_req_err}.")
             raise InvalidRequestException
         except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while updating the user.",
@@ -168,8 +178,10 @@ class SQLAlchemyUserRepository(UserRepository):
             await self.db_session.refresh(res)
             return res
         except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid RequestError: {inv_req_err}.")
             raise InvalidRequestException
         except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while updating the user.",
@@ -185,14 +197,17 @@ class SQLAlchemyUserRepository(UserRepository):
                 return res
             else:
                 raise NoResultFound
-        except NoResultFound:
+        except NoResultFound as nrf_err:
+            logger.error(f"NoResultFound: {nrf_err}.")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found.",
             )
         except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid RequestError: {inv_req_err}.")
             raise InvalidRequestError
         except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while deleting the user.",

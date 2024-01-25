@@ -35,6 +35,7 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
 )
 from src.core.services.token import generate_tokens
 from src.core.services.file_service import upload_image, delete_old_image, validate_file
+from src.logging_config import logger
 
 
 async def create_user(
@@ -55,6 +56,9 @@ async def create_user(
             )
         ).id
     elif group_id is None and user_data.group_name is None:
+        logger.error(
+            f"Could not create group. Group name is required, because group_id is not provided or not valid."
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Group name is required."
         )
@@ -87,6 +91,7 @@ async def login_user(
     db_session: AsyncSession,
 ) -> TokensResult:
     if not credentials.login or not credentials.password:
+        logger.error(f"Incorrect credentials.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect login or password",
@@ -112,6 +117,7 @@ async def get_updated_db_user(
 ) -> UserResponseModel:
     user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
     if user is None:
+        logger.error(f"User with id {user_id} is not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
@@ -140,6 +146,7 @@ async def get_db_user_by_id(
 ) -> UserResponseModel:
     user = await SQLAlchemyUserRepository(db_session).get_user(user_id=user_id)
     if user is None:
+        logger.error(f"User with id {user_id} does not exist.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
@@ -152,6 +159,7 @@ async def get_db_user_by_email(
 ) -> UserResponseModel:
     user = await SQLAlchemyUserRepository(db_session).get_user(email=str(email))
     if user is None:
+        logger.error(f"User with email {email} does not exist.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
@@ -164,6 +172,7 @@ async def get_db_user_by_username(
 ) -> UserResponseModel:
     user = await SQLAlchemyUserRepository(db_session).get_user(username=username)
     if user is None:
+        logger.error(f"User with username {username} does not exist.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
@@ -177,6 +186,7 @@ async def delete_db_user(user_id: UUID4, db_session: AsyncSession) -> UUID4:
 
 async def refresh_tokens(refresh_token, db_session: AsyncSession) -> TokensResult:
     if redis_client.get(str(refresh_token)) is not None:
+        logger.error(f"Invalid refresh token. Blacklisted.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid refresh token. Blacklisted.",
@@ -222,9 +232,12 @@ async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]
             order_by=kwargs.get("order_by"),
         )
     else:
+        logger.error(
+            f"User with the {payload.role} role does not have access. You are not {Role.ADMIN} or {Role.MODERATOR}."
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with the {payload.role} role does not have access. You are not ADMIN or MODERATOR.",
+            detail=f"User with the {payload.role} role does not have access. You are not {Role.ADMIN} or {Role.MODERATOR}.",
         )
 
 
@@ -232,6 +245,7 @@ async def request_reset_user_password(email: EmailStr, db_session):
     user = await get_db_user_by_email(email, db_session)
 
     if user.is_blocked:
+        logger.error(f"User with email {email} is blocked.")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
         )
@@ -260,6 +274,7 @@ async def reset_user_password(
     user_id = payload.user_id
 
     if payload.is_blocked:
+        logger.error(f"User with id {user_id} is blocked.")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You are blocked."
         )
