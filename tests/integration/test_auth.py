@@ -9,14 +9,10 @@ from src.ports.schemas.user import (
     SignUpModel,
     CredentialsModel,
     TokenDataWithTokenType,
-    UserCreateModel,
 )
-from conftest import serialize
+from tests.integration.conftest import serialize, create_user
 from src.adapters.database.repositories.sqlalchemy_user_repository import (
     SQLAlchemyUserRepository,
-)
-from src.adapters.database.repositories.sqlalchemy_group_repository import (
-    SQLAlchemyGroupRepository,
 )
 
 
@@ -174,18 +170,7 @@ async def test_auth_request_reset_password_with_not_existed_email(
 async def test_auth_reset_password(
     test_client: AsyncClient, get_test_async_session, test_user_dict_user
 ):
-    group = await SQLAlchemyGroupRepository(get_test_async_session).create_group(
-        group_name="test"
-    )
-    user = await SQLAlchemyUserRepository(get_test_async_session).create_user(
-        UserCreateModel(
-            email=test_user_dict_user.get("email"),
-            username=test_user_dict_user.get("username"),
-            phone_number=test_user_dict_user.get("phone_number"),
-            group_id=group.id,
-            password="testHashedPassword",
-        )
-    )
+    user = await create_user(test_user_dict_user, "test", get_test_async_session)
 
     test_refresh_token = generate_token(
         payload=TokenDataWithTokenType(
@@ -208,4 +193,6 @@ async def test_auth_reset_password(
         user_id=user.id
     )
 
-    assert response.status_code == 200 and user.password != "testHashedPassword"
+    assert response.status_code == 200 and user.password != test_user_dict_user.get(
+        "password"
+    )

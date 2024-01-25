@@ -184,6 +184,8 @@ async def create_user(
             email=user_model_dict.get("email"),
             username=user_model_dict.get("username"),
             phone_number=user_model_dict.get("phone_number"),
+            name=user_model_dict.get("name"),
+            surname=user_model_dict.get("surname"),
             group_id=group.id,
             password="testHashedPassword",
             role=user_model_dict.get("role"),
@@ -193,9 +195,7 @@ async def create_user(
 
 @pytest_asyncio.fixture(scope="function")
 async def user_with_role_user(test_user_dict_user, get_test_async_session):
-    user = await create_user(test_user_dict_user, "test", get_test_async_session)
-    yield user
-    await SQLAlchemyUserRepository(get_test_async_session).delete_user(user_id=user.id)
+    yield await create_user(test_user_dict_user, "test", get_test_async_session)
 
 
 @pytest_asyncio.fixture(scope="function")
