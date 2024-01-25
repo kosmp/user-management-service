@@ -6,4 +6,4 @@ python -m pip install pytest==7.4.4
 python -m pip install pytest_asyncio==0.23.3
 python -m pip install httpx==0.26.0
 
-python -m pytest
+python -m pytest --disable-warnings
