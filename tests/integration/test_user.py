@@ -4,8 +4,8 @@ from tests.integration.conftest import jwt_token, serialize
 
 
 @pytest.mark.asyncio
-async def test_delete_me(test_client: AsyncClient, user_with_role_user):
-    response = await test_client.delete(
+async def test_delete_me(client: AsyncClient, user_with_role_user):
+    response = await client.delete(
         f"/v1/user/me",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_user)}"},
     )
@@ -14,9 +14,9 @@ async def test_delete_me(test_client: AsyncClient, user_with_role_user):
 
 
 @pytest.mark.asyncio
-async def test_update_me(test_client: AsyncClient, user_with_role_user):
+async def test_update_me(client: AsyncClient, user_with_role_user):
     new_surname = user_with_role_user.surname + "ab"
-    response = await test_client.patch(
+    response = await client.patch(
         f"/v1/user/me",
         data={"surname": new_surname},
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_user)}"},
@@ -28,9 +28,9 @@ async def test_update_me(test_client: AsyncClient, user_with_role_user):
 
 
 @pytest.mark.asyncio
-async def test_update_user_by_admin(test_client: AsyncClient, user_with_role_admin):
+async def test_update_user_by_admin(client: AsyncClient, user_with_role_admin):
     new_surname = user_with_role_admin.surname + "ab"
-    response = await test_client.patch(
+    response = await client.patch(
         f"/v1/user/{user_with_role_admin.id}/update",
         data={"surname": new_surname},
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_admin)}"},
@@ -42,8 +42,8 @@ async def test_update_user_by_admin(test_client: AsyncClient, user_with_role_adm
 
 
 @pytest.mark.asyncio
-async def test_update_user_by_user(test_client: AsyncClient, user_with_role_user):
-    response = await test_client.patch(
+async def test_update_user_by_user(client: AsyncClient, user_with_role_user):
+    response = await client.patch(
         f"/v1/user/{user_with_role_user.id}/update",
         data={"surname": user_with_role_user.surname},
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_user)}"},

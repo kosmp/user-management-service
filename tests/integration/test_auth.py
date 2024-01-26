@@ -17,84 +17,76 @@ from src.adapters.database.repositories.sqlalchemy_user_repository import (
 
 
 @pytest.mark.asyncio
-async def test_auth_signup(test_client: AsyncClient, test_user_sign_up_dict):
-    signup_data = SignUpModel(**test_user_sign_up_dict)
+async def test_auth_signup(client: AsyncClient, user_sign_up_dict):
+    signup_data = SignUpModel(**user_sign_up_dict)
 
-    response = await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
+    response = await client.post("/v1/auth/signup", data=signup_data.__dict__)
 
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_auth_signup_email_exists(
-    test_client: AsyncClient, test_user_sign_up_dict_2, test_user_sign_up_dict_3
+    client: AsyncClient, user_sign_up_dict_2, user_sign_up_dict_3
 ):
-    signup_data_1 = SignUpModel(**test_user_sign_up_dict_2)
-    signup_data_2 = SignUpModel(**test_user_sign_up_dict_3)
+    signup_data_1 = SignUpModel(**user_sign_up_dict_2)
+    signup_data_2 = SignUpModel(**user_sign_up_dict_3)
 
-    await test_client.post("/v1/auth/signup", data=signup_data_1.__dict__)
-    response = await test_client.post("/v1/auth/signup", data=signup_data_2.__dict__)
+    await client.post("/v1/auth/signup", data=signup_data_1.__dict__)
+    response = await client.post("/v1/auth/signup", data=signup_data_2.__dict__)
 
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_auth_signup_email_exists(
-    test_client: AsyncClient, test_user_sign_up_dict
-):
-    signup_data_1 = SignUpModel(**test_user_sign_up_dict)
-    signup_data_2 = SignUpModel(**test_user_sign_up_dict)
+async def test_auth_signup_email_exists(client: AsyncClient, user_sign_up_dict):
+    signup_data_1 = SignUpModel(**user_sign_up_dict)
+    signup_data_2 = SignUpModel(**user_sign_up_dict)
 
-    await test_client.post("/v1/auth/signup", data=signup_data_1.__dict__)
-    response = await test_client.post("/v1/auth/signup", data=signup_data_2.__dict__)
+    await client.post("/v1/auth/signup", data=signup_data_1.__dict__)
+    response = await client.post("/v1/auth/signup", data=signup_data_2.__dict__)
 
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_auth_login_success(
-    test_client: AsyncClient, create_user_and_login_success
-):
+async def test_auth_login_success(create_user_and_login_success):
     response = create_user_and_login_success
 
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_auth_login_with_wrong_pass(
-    test_client: AsyncClient, test_user_sign_up_dict
-):
-    signup_data = SignUpModel(**test_user_sign_up_dict)
-    password = test_user_sign_up_dict.get("password") + "123"
+async def test_auth_login_with_wrong_pass(client: AsyncClient, user_sign_up_dict):
+    signup_data = SignUpModel(**user_sign_up_dict)
+    password = user_sign_up_dict.get("password") + "123"
     login_data = CredentialsModel(
-        login=test_user_sign_up_dict.get("username"), password=password
+        login=user_sign_up_dict.get("username"), password=password
     )
 
-    await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
-    response = await test_client.post("/v1/auth/login", json=login_data.model_dump())
+    await client.post("/v1/auth/signup", data=signup_data.__dict__)
+    response = await client.post("/v1/auth/login", json=login_data.model_dump())
 
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_auth_login_with_invalid_login(
-    test_client: AsyncClient, test_user_sign_up_dict
-):
-    signup_data = SignUpModel(**test_user_sign_up_dict)
-    login = "ab" + test_user_sign_up_dict.get("username")
+async def test_auth_login_with_invalid_login(client: AsyncClient, user_sign_up_dict):
+    signup_data = SignUpModel(**user_sign_up_dict)
+    login = "ab" + user_sign_up_dict.get("username")
     login_data = CredentialsModel(
-        login=login, password=test_user_sign_up_dict.get("password")
+        login=login, password=user_sign_up_dict.get("password")
     )
 
-    await test_client.post("/v1/auth/signup", data=signup_data.__dict__)
-    response = await test_client.post("/v1/auth/login", json=login_data.model_dump())
+    await client.post("/v1/auth/signup", data=signup_data.__dict__)
+    response = await client.post("/v1/auth/login", json=login_data.model_dump())
 
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_auth_refresh_token_endpoint(
-    test_client: AsyncClient, create_user_and_login_success
+    client: AsyncClient, create_user_and_login_success
 ):
     response_login = create_user_and_login_success
 
@@ -102,7 +94,7 @@ async def test_auth_refresh_token_endpoint(
     if response_login.status_code == 200:
         refresh_token = serialize(response_login.content).get("refresh_token")
 
-    response_refresh = await test_client.post(
+    response_refresh = await client.post(
         "/v1/auth/refresh-token", params={"token": refresh_token}
     )
 
@@ -111,7 +103,7 @@ async def test_auth_refresh_token_endpoint(
 
 @pytest.mark.asyncio
 async def test_auth_refresh_endpoint_using_access_token(
-    test_client: AsyncClient, create_user_and_login_success
+    client: AsyncClient, create_user_and_login_success
 ):
     response_login = create_user_and_login_success
 
@@ -120,7 +112,7 @@ async def test_auth_refresh_endpoint_using_access_token(
     if response_login.status_code == 200:
         access_token = serialize(response_login.content).get("access_token")
 
-    response_refresh = await test_client.post(
+    response_refresh = await client.post(
         "/v1/auth/refresh-token", params={"token": access_token}
     )
 
@@ -129,11 +121,11 @@ async def test_auth_refresh_endpoint_using_access_token(
 
 @pytest.mark.asyncio
 async def test_auth_request_reset_password_success(
-    test_client: AsyncClient, test_user_sign_up_dict, create_user_and_login_success
+    client: AsyncClient, user_sign_up_dict, create_user_and_login_success
 ):
-    email = test_user_sign_up_dict.get("email")
+    email = user_sign_up_dict.get("email")
 
-    response = await test_client.post(
+    response = await client.post(
         "/v1/auth/request-password-reset", params={"email": email}
     )
 
@@ -142,11 +134,11 @@ async def test_auth_request_reset_password_success(
 
 @pytest.mark.asyncio
 async def test_auth_request_reset_password_with_not_existed_email(
-    test_client: AsyncClient, test_user_sign_up_dict, create_user_and_login_success
+    client: AsyncClient, user_sign_up_dict, create_user_and_login_success
 ):
-    email = test_user_sign_up_dict.get("email")
+    email = user_sign_up_dict.get("email")
 
-    response = await test_client.post(
+    response = await client.post(
         "/v1/auth/request-password-reset", params={"email": email}
     )
 
@@ -155,11 +147,11 @@ async def test_auth_request_reset_password_with_not_existed_email(
 
 @pytest.mark.asyncio
 async def test_auth_request_reset_password_with_not_existed_email(
-    test_client: AsyncClient, test_user_dict_user, create_user_and_login_success
+    client: AsyncClient, user_dict_user, create_user_and_login_success
 ):
-    email = "ab" + test_user_dict_user.get("email")
+    email = "ab" + user_dict_user.get("email")
 
-    response = await test_client.post(
+    response = await client.post(
         "/v1/auth/request-password-reset", params={"email": email}
     )
 
@@ -168,9 +160,9 @@ async def test_auth_request_reset_password_with_not_existed_email(
 
 @pytest.mark.asyncio
 async def test_auth_reset_password(
-    test_client: AsyncClient, get_test_async_session, test_user_dict_user
+    client: AsyncClient, get_test_async_session, user_dict_user
 ):
-    user = await create_user(test_user_dict_user, "test", get_test_async_session)
+    user = await create_user(user_dict_user, "test", get_test_async_session)
 
     test_refresh_token = generate_token(
         payload=TokenDataWithTokenType(
@@ -183,7 +175,7 @@ async def test_auth_reset_password(
         expires_delta=timedelta(minutes=5),
     )
 
-    response = await test_client.put(
+    response = await client.put(
         "/v1/auth/reset-password",
         params={"token": test_refresh_token},
         json={"password": "1234567Psg"},
@@ -193,6 +185,6 @@ async def test_auth_reset_password(
         user_id=user.id
     )
 
-    assert response.status_code == 200 and user.password != test_user_dict_user.get(
+    assert response.status_code == 200 and user.password != user_dict_user.get(
         "password"
     )

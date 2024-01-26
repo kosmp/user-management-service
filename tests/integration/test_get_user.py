@@ -4,8 +4,8 @@ from tests.integration.conftest import jwt_token
 
 
 @pytest.mark.asyncio
-async def test_get_user_with_role_user(test_client: AsyncClient, user_with_role_user):
-    response = await test_client.get(
+async def test_get_user_with_role_user(client: AsyncClient, user_with_role_user):
+    response = await client.get(
         f"/v1/user/{user_with_role_user.id}",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_user)}"},
     )
@@ -14,8 +14,8 @@ async def test_get_user_with_role_user(test_client: AsyncClient, user_with_role_
 
 
 @pytest.mark.asyncio
-async def test_get_user_with_role_admin(test_client: AsyncClient, user_with_role_admin):
-    response = await test_client.get(
+async def test_get_user_with_role_admin(client: AsyncClient, user_with_role_admin):
+    response = await client.get(
         f"/v1/user/{user_with_role_admin.id}",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_admin)}"},
     )
@@ -25,9 +25,9 @@ async def test_get_user_with_role_admin(test_client: AsyncClient, user_with_role
 
 @pytest.mark.asyncio
 async def test_get_user_with_role_moderator_and_same_group(
-    test_client: AsyncClient, user_with_role_moderator
+    client: AsyncClient, user_with_role_moderator
 ):
-    response = await test_client.get(
+    response = await client.get(
         f"/v1/user/{user_with_role_moderator.id}",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_moderator)}"},
     )
@@ -37,13 +37,13 @@ async def test_get_user_with_role_moderator_and_same_group(
 
 @pytest.mark.asyncio
 async def test_get_user_with_role_moderator_and_different_group(
-    test_client: AsyncClient, moderator_and_user_with_different_groups
+    client: AsyncClient, moderator_and_user_with_different_groups
 ):
     user_with_differ_role = moderator_and_user_with_different_groups.get(
         "user_with_differ_role"
     )
     moderator = moderator_and_user_with_different_groups.get("user_with_role_moderator")
-    response = await test_client.get(
+    response = await client.get(
         f"/v1/user/{user_with_differ_role.id}",
         headers={"Authorization": f"Bearer {jwt_token(moderator)}"},
     )
@@ -52,8 +52,8 @@ async def test_get_user_with_role_moderator_and_different_group(
 
 
 @pytest.mark.asyncio
-async def test_get_me(test_client: AsyncClient, user_with_role_user):
-    response = await test_client.get(
+async def test_get_me(client: AsyncClient, user_with_role_user):
+    response = await client.get(
         f"/v1/user/me",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_user)}"},
     )
@@ -62,8 +62,8 @@ async def test_get_me(test_client: AsyncClient, user_with_role_user):
 
 
 @pytest.mark.asyncio
-async def test_get_users_for_admin(test_client: AsyncClient, user_with_role_admin):
-    response = await test_client.get(
+async def test_get_users_for_admin(client: AsyncClient, user_with_role_admin):
+    response = await client.get(
         f"/v1/users",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_admin)}"},
     )
@@ -72,8 +72,8 @@ async def test_get_users_for_admin(test_client: AsyncClient, user_with_role_admi
 
 
 @pytest.mark.asyncio
-async def test_get_users_for_user_role(test_client: AsyncClient, user_with_role_user):
-    response = await test_client.get(
+async def test_get_users_for_user_role(client: AsyncClient, user_with_role_user):
+    response = await client.get(
         f"/v1/users",
         headers={"Authorization": f"Bearer {jwt_token(user_with_role_user)}"},
     )
