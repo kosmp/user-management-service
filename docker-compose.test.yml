@@ -62,7 +62,7 @@ services:
     build: .
     entrypoint: sh -c "./src/scripts/entrypoint_tests.sh"
     ports:
-      - "8001:${PORT}"
+      - "8001:${APP_PORT}"
     env_file:
       - .test.env
     volumes:

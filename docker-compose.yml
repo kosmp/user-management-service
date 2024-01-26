@@ -71,7 +71,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:${PORT}"
+      - "8000:${APP_PORT}"
     volumes:
       - .:/home/appuser
     init: True

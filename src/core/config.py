@@ -29,9 +29,9 @@ class PydanticSettings(BaseSettings):
     localstack_access_key_id: str = None
     localstack_secret_access_key: str = None
     s3_bucket_name: str = None
-    host: str = None
-    http_schema: str = None
-    port: int = None
+    app_host: str = None
+    app_http_schema: str = None
+    app_port: int = None
 
     @property
     def get_db_creds(self):
