@@ -71,9 +71,11 @@ async def create_user(
         {
             "password": hashed_password,
             "group_id": group_id,
-            "image": await upload_image(image_file, user_data.username)
-            if image_file
-            else None,
+            "image": (
+                await upload_image(image_file, user_data.username)
+                if image_file
+                else None
+            ),
         }
     )
 
@@ -237,7 +239,8 @@ async def get_users_for_admin_and_moderator(**kwargs) -> List[UserResponseModel]
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User with the {payload.role} role does not have access. You are not {Role.ADMIN} or {Role.MODERATOR}.",
+            detail=f"User with the {payload.role} role does not have access. "
+            f"You are not {Role.ADMIN} or {Role.MODERATOR}.",
         )
 
 
