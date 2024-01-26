@@ -15,14 +15,14 @@ services:
       timeout: 10s
       retries: 10
     ports:
-      - "${RABBITMQ_PORT}:5672"
+      - "5671:${RABBITMQ_PORT}"
       - 15672:15672
   app-db:
     image: postgres:15
     container_name: app-pg
     restart: always
-    ports:
-      - "${DB_PORT}:5432"
+    expose:
+      - "${DB_PORT}"
     volumes:
       - .local/services/db:/var/lib/postgresql/data
     environment:
@@ -38,12 +38,13 @@ services:
     image: redis:7
     restart: always
     ports:
-      - "${REDIS_PORT}:6379"
+      - "6379:${REDIS_PORT}"
     volumes:
       - .local/services/redis:/data
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
+
   localstack:
     image: localstack/localstack:3.0
     container_name: localstack
@@ -70,7 +71,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "8000:${PORT}"
     volumes:
       - .:/home/appuser
     init: True
