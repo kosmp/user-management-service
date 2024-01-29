@@ -1,50 +1,51 @@
 services:
-  app-rabbitmq:
+  test-app-rabbitmq:
     image: rabbitmq:3.12.12-management
-    container_name: app-rabbitmq
+    container_name: test-app-rabbitmq
     hostname: rabbit
     restart: always
+    ports:
+      - "5672:${RABBITMQ_PORT}"
+      - 15671:15672
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
-      interval: 10s
-      timeout: 10s
+      interval: 5s
+      timeout: 5s
       retries: 10
-    ports:
-      - "${RABBITMQ_PORT}:5672"
-      - 15672:15672
-  app-db:
+  test-app-db:
     image: postgres:15
-    container_name: app-pg
+    container_name: test-app-pg
     restart: always
-    ports:
-      - "${DB_PORT}:5432"
+    expose:
+      - "${DB_PORT}"
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE_NAME}
     healthcheck:
       test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
-      interval: 10s
+      interval: 4s
       timeout: 3s
       retries: 3
-  app-redis:
+  test-app-redis:
     image: redis:7
     restart: always
     ports:
-      - "${REDIS_PORT}:6379"
+      - "6380:${REDIS_PORT}"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
-  localstack:
+  test-localstack:
     image: localstack/localstack:3.0
-    container_name: localstack
+    container_name: test-localstack
     hostname: localstack
     ports:
-      - 4566:4566
-      - 8080:8080
+      - 4567:4566
+      - 8081:8082
     environment:
       - SERVICES=s3
       - DEBUG=0
@@ -55,24 +56,23 @@ services:
     volumes:
       - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
       - "/var/run/docker.sock:/var/run/docker.sock"
-  app:
+  test-app:
     platform: linux/x86-64
-    container_name: app
+    container_name: test-app
     build: .
-    command: sh -c "./src/scripts/entrypoint_migrations.sh && pytest tests"
+    entrypoint: sh -c "./src/scripts/entrypoint_tests.sh"
+    ports:
+      - "8001:${APP_PORT}"
     env_file:
       - .test.env
-    ports:
-      - "8000:8000"
     volumes:
       - .:/home/appuser
-    init: True
     depends_on:
-      app-db:
+      test-app-db:
         condition: service_healthy
-      app-redis:
+      test-app-redis:
         condition: service_started
-      app-rabbitmq:
+      test-app-rabbitmq:
         condition: service_healthy
-      localstack:
+      test-localstack:
         condition: service_started

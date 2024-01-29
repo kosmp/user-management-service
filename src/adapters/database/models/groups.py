@@ -1,7 +1,7 @@
 from sqlalchemy import UUID, DateTime, String, func, Index, text
 from sqlalchemy.orm import mapped_column, relationship
 
-from src.adapters.database.database_settings import Base
+from src.adapters.database.models.users import Base
 
 
 class Group(Base):

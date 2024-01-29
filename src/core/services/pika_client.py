@@ -1,8 +1,11 @@
 import json
 from datetime import datetime
+from src.logging_config import logger
 
 import pika
 from pika.credentials import PlainCredentials
+
+from src.core import settings
 
 
 class PikaClient:
@@ -21,6 +24,9 @@ class PikaClient:
                 rabbitmq_host, rabbitmq_port, rabbitmq_vhost, credentials, heartbeat=0
             )
         )
+
+        if self.connection:
+            logger.info("Connection established successfully with RabbitMQ.")
 
     def send_message(self, email_to: str, reset_link: str, queue: str):
         channel = self.connection.channel()
@@ -46,5 +52,16 @@ class PikaClient:
             properties=properties,
         )
 
+        logger.info("Message sent to RabbitMQ.")
+
     def __del__(self):
         self.connection.close()
+
+
+pika_client_instance = PikaClient(
+    rabbitmq_host=settings.rabbitmq_host,
+    rabbitmq_port=settings.rabbitmq_port,
+    rabbitmq_vhost=settings.rabbitmq_vhost,
+    rabbitmq_default_user=settings.rabbitmq_default_user,
+    rabbitmq_default_pass=settings.rabbitmq_default_pass,
+)

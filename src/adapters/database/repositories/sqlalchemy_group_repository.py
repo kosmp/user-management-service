@@ -6,6 +6,7 @@ from sqlalchemy.exc import (
     NoResultFound,
 )
 
+from src.logging_config import logger
 from src.adapters.database.models.groups import Group
 from src.ports.repositories.group_repository import GroupRepository
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,15 +30,18 @@ class SQLAlchemyGroupRepository(GroupRepository):
             return GroupResponseModel.model_validate(new_group)
         except IntegrityError as integrity_err:
             await self.db_session.rollback()
+            logger.error(f"Integrity error: {integrity_err}.")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Group with name '{group_name}' already exists.",
             )
         except InvalidRequestError as inv_req_err:
             await self.db_session.rollback()
+            logger.error(f"Invalid request error: {inv_req_err}.")
             raise InvalidRequestException
-        except Exception as generic_err:
+        except Exception as err:
             await self.db_session.rollback()
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An unexpected error occurred while creating the group.",
@@ -46,22 +50,17 @@ class SQLAlchemyGroupRepository(GroupRepository):
     async def get_group(self, group_id: UUID4) -> Union[GroupResponseModel, None]:
         try:
             query = select(Group).where(Group.id == str(group_id))
-            res = await self.db_session.scalar(query)
+            res = (await self.db_session.execute(query)).one_or_none()
 
-            if res is not None:
-                return GroupResponseModel(
-                    id=res.id, name=res.name, created_at=res.created_at
-                )
-            else:
-                raise NoResultFound
-        except NoResultFound:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Group not found.",
-            )
+            if res is None:
+                return res
+
+            return res[0]
         except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid request error: {inv_req_err}")
             raise InvalidRequestException
-        except Exception as generic_err:
+        except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while retrieving the group.",
@@ -78,18 +77,22 @@ class SQLAlchemyGroupRepository(GroupRepository):
             else:
                 raise NoResultFound
         except IntegrityError as int_err:
+            logger.error(f"Invalid request error: {int_err}.")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot delete the group due to integrity constraints.",
             )
-        except NoResultFound:
+        except NoResultFound as nrf_err:
+            logger.error(f"NoResultFound: {nrf_err}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Group not found.",
             )
         except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid request error: {inv_req_err}")
             raise InvalidRequestError
         except Exception as err:
+            logger.error(f"General error: {err}.")
             raise HTTPException(
                 status_code=500, detail="An error occurred while deleting the group."
             )

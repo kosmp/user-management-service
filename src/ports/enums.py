@@ -10,3 +10,8 @@ class Role(StrEnum):
 class SupportedFileTypes(StrEnum):
     PNG: str = "image/png"
     JPEG: str = "image/jpeg"
+
+
+class TokenType(StrEnum):
+    ACCESS: str = "access"
+    REFRESH: str = "refresh"

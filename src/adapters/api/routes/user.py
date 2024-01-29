@@ -43,7 +43,7 @@ async def get_users(
     filter_by_name: str = None,
     filter_by_surname: str = None,
     sort_by: str = None,
-    order_by: str = Query("asc", regex="^(asc|desc)$"),
+    order_by: str = Query("asc", pattern="^(asc|desc)$"),
     token: HTTPAuthorizationCredentials = Security(security),
     db_session: AsyncSession = Depends(get_async_session),
 ):

@@ -18,7 +18,6 @@ class PydanticSettings(BaseSettings):
     rabbitmq_default_user: str = None
     rabbitmq_default_pass: str = None
     rabbitmq_port: int = None
-    api_url: str = None
     web_url: str = None
     admin_username: str = None
     admin_phone_number: str = None
@@ -30,6 +29,9 @@ class PydanticSettings(BaseSettings):
     localstack_access_key_id: str = None
     localstack_secret_access_key: str = None
     s3_bucket_name: str = None
+    app_host: str = None
+    app_http_schema: str = None
+    app_port: int = None
 
     @property
     def get_db_creds(self):

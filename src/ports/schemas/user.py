@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from fastapi import UploadFile, Form
+from fastapi import Form
 from pydantic import (
     BaseModel,
     constr,
@@ -9,11 +9,10 @@ from pydantic import (
     EmailStr,
     field_validator,
     ConfigDict,
-    Field,
 )
 
-from src.ports.schemas.group import GroupNameType
-from src.ports.enums import Role
+from src.ports.schemas.group import GroupNameType, GroupResponseModel
+from src.ports.enums import Role, TokenType
 from typing import Optional
 
 
@@ -35,13 +34,13 @@ class UserCreateModel(UserBase):
 @dataclass
 class SignUpModel:
     email: EmailStr = Form()
-    username: str = Form()
+    username: str = Form(pattern=r"^[a-zA-Z0-9_]+$")
     phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$")
-    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
+    name: str = Form(min_length=1, max_length=15, default=None)
+    surname: str = Form(min_length=1, max_length=15, default=None)
     password: str = Form(min_length=8)
-    group_id: Optional[UUID4] = Form(default=None)
-    group_name: Optional[GroupNameType] = Form(default=None)
+    group_id: UUID4 = Form(default=None)
+    group_name: GroupNameType = Form(default=None)
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -86,7 +85,7 @@ class UserResponseModelWithPassword(UserResponseModel):
 
 class UserUpdateModelWithoutImage(BaseModel):
     email: Optional[EmailStr] = None
-    username: Optional[str] = None
+    username: Optional[constr(pattern=r"^[a-zA-Z0-9_]+$")] = None
     name: Optional[constr(min_length=1, max_length=15)] = None
     surname: Optional[constr(min_length=1, max_length=15)] = None
     phone_number: Optional[constr(pattern=r"^\+?[1-9]\d{1,14}$")] = None
@@ -102,24 +101,24 @@ class UserUpdateModelWithImage(UserUpdateModelWithoutImage):
 
 @dataclass
 class UserUpdateRequestModelWithoutImage:
-    email: Optional[EmailStr] = Form(default=None)
-    username: Optional[str] = Form(default=None)
-    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
-    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    group_id: Optional[UUID4] = Form(default=None)
-    is_blocked: Optional[bool] = Form(default=None)
-    role: Optional[Role] = Form(default=None)
+    email: EmailStr = Form(default=None)
+    username: str = Form(pattern=r"^[a-zA-Z0-9_]+$", default=None)
+    phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
+    name: str = Form(min_length=1, max_length=15, default=None)
+    surname: str = Form(min_length=1, max_length=15, default=None)
+    group_id: UUID4 = Form(default=None)
+    is_blocked: bool = Form(default=None)
+    role: Role = Form(default=None)
 
 
 @dataclass
 class UserUpdateMeRequestModel:
-    email: Optional[EmailStr] = Form(default=None)
-    username: Optional[str] = Form(default=None)
-    phone_number: Optional[str] = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
-    name: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    surname: Optional[str] = Form(min_length=1, max_length=15, default=None)
-    group_id: Optional[UUID4] = Form(default=None)
+    email: EmailStr = Form(default=None)
+    username: str = Form(pattern=r"^[a-zA-Z0-9_]+$", default=None)
+    phone_number: str = Form(pattern=r"^\+?[1-9]\d{1,14}$", default=None)
+    name: str = Form(min_length=1, max_length=15, default=None)
+    surname: str = Form(min_length=1, max_length=15, default=None)
+    group_id: UUID4 = Form(default=None)
 
 
 class TokenData(BaseModel):
@@ -127,6 +126,10 @@ class TokenData(BaseModel):
     role: str
     group_id: str
     is_blocked: bool
+
+
+class TokenDataWithTokenType(TokenData):
+    token_type: TokenType
 
 
 class TokensResult(BaseModel):
