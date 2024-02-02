@@ -31,7 +31,7 @@ class PikaClient:
         if self.connection:
             logger.info("Connection established successfully with RabbitMQ.")
 
-    def send_message(self, email_to: str, user_id: UUID4, reset_link: str, queue: str):
+    def send_message(self, email_to: str, user_id: str, reset_link: str, queue: str):
         channel = self.connection.channel()
 
         channel.queue_declare(queue=queue, durable=True)

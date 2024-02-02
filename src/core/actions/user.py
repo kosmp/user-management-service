@@ -269,7 +269,7 @@ async def request_reset_user_password(email: EmailStr, db_session):
     )
 
     pika_client_instance.send_message(
-        str(email), user.id, reset_link, "reset-password-stream"
+        str(email), str(user.id), reset_link, "reset-password-stream"
     )
 
     return {"success": True}
