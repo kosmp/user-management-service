@@ -1,5 +1,8 @@
 import json
 from datetime import datetime
+
+from pydantic import UUID4
+
 from src.logging_config import logger
 
 import pika
@@ -28,7 +31,7 @@ class PikaClient:
         if self.connection:
             logger.info("Connection established successfully with RabbitMQ.")
 
-    def send_message(self, email_to: str, reset_link: str, queue: str):
+    def send_message(self, email_to: str, user_id: UUID4, reset_link: str, queue: str):
         channel = self.connection.channel()
 
         channel.queue_declare(queue=queue, durable=True)
@@ -40,6 +43,7 @@ class PikaClient:
 
         body = json.dumps(
             {
+                "user_id": user_id,
                 "reset_link": reset_link,
                 "publishing_datetime": datetime.now().isoformat(),
             }
