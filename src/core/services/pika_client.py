@@ -44,11 +44,14 @@ class PikaClient:
             arguments={
                 "x-queue-type": "quorum",
                 "x-dead-letter-exchange": "email-dlx",
+                "x-dead-letter-routing-key": settings.rabbitmq_email_queue_name,
             },
         )
 
         self.channel.queue_bind(
-            exchange="email-x", queue=settings.rabbitmq_email_queue_name
+            exchange="email-x",
+            queue=settings.rabbitmq_email_queue_name,
+            routing_key=settings.rabbitmq_email_queue_name,
         )
 
     def send_message(self, email_to: str, user_id: str, reset_link: str):
