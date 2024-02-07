@@ -5,7 +5,7 @@ services:
     hostname: rabbit
     restart: always
     ports:
-      - "5672:${RABBITMQ_PORT}"
+      - "5673:${RABBITMQ_PORT}"
       - 15671:15672
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
