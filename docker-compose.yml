@@ -1,8 +1,7 @@
 services:
   app-rabbitmq:
-    image: rabbitmq:3.12.12-management
+    image: rabbitmq:3-management-alpine
     container_name: app-rabbitmq
-    hostname: rabbit
     restart: always
     volumes:
       - .local/services/rabbitmq:/var/lib/rabbitmq/mnesia/
@@ -15,8 +14,10 @@ services:
       timeout: 10s
       retries: 10
     ports:
-      - "5671:${RABBITMQ_PORT}"
+      - "5672:${RABBITMQ_PORT}"
       - 15672:15672
+    networks:
+      - app-network
   app-db:
     image: postgres:15
     container_name: app-pg
@@ -34,6 +35,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    networks:
+      - app-network
   app-redis:
     image: redis:7
     restart: always
@@ -44,7 +47,8 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_PORT: ${REDIS_PORT}
-
+    networks:
+      - app-network
   localstack:
     image: localstack/localstack:3.0
     container_name: localstack
@@ -63,6 +67,8 @@ services:
       - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
       - .local/services/localstack-data:/var/lib/localstack
       - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - app-network
   app:
     platform: linux/x86-64
     container_name: app
@@ -84,3 +90,7 @@ services:
         condition: service_healthy
       localstack:
         condition: service_started
+    networks:
+      - app-network
+networks:
+  app-network:

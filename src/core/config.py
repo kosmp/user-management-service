@@ -25,6 +25,7 @@ class PydanticSettings(BaseSettings):
     admin_password: str = None
     rabbitmq_host: str = None
     rabbitmq_vhost: str = None
+    rabbitmq_email_queue_name: str = None
     localstack_endpoint_url: str = None
     localstack_access_key_id: str = None
     localstack_secret_access_key: str = None

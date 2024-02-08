@@ -1,5 +1,8 @@
 import json
 from datetime import datetime
+
+from pydantic import UUID4
+
 from src.logging_config import logger
 
 import pika
@@ -28,11 +31,30 @@ class PikaClient:
         if self.connection:
             logger.info("Connection established successfully with RabbitMQ.")
 
-    def send_message(self, email_to: str, reset_link: str, queue: str):
-        channel = self.connection.channel()
+        self.channel = self.connection.channel()
 
-        channel.queue_declare(queue=queue, durable=True)
+        self.channel.basic_qos(prefetch_count=3)
 
+        self.channel.exchange_declare("email-x", exchange_type="direct")
+        self.channel.exchange_declare("email-dlx", exchange_type="direct")
+
+        self.channel.queue_declare(
+            queue=settings.rabbitmq_email_queue_name,
+            durable=True,
+            arguments={
+                "x-queue-type": "quorum",
+                "x-dead-letter-exchange": "email-dlx",
+                "x-dead-letter-routing-key": settings.rabbitmq_email_queue_name,
+            },
+        )
+
+        self.channel.queue_bind(
+            exchange="email-x",
+            queue=settings.rabbitmq_email_queue_name,
+            routing_key=settings.rabbitmq_email_queue_name,
+        )
+
+    def send_message(self, email_to: str, user_id: str, reset_link: str):
         # delivery_mode=2 for guaranteed delivery instead of message throughput
         # Messages marked as persistent messages that are delivered to durable queues will be stored to the disk
         properties = pika.BasicProperties(delivery_mode=2)
@@ -40,14 +62,15 @@ class PikaClient:
 
         body = json.dumps(
             {
+                "user_id": user_id,
                 "reset_link": reset_link,
                 "publishing_datetime": datetime.now().isoformat(),
             }
         )
 
-        channel.basic_publish(
-            exchange="",
-            routing_key=queue,
+        self.channel.basic_publish(
+            exchange="email-x",
+            routing_key=settings.rabbitmq_email_queue_name,
             body=body,
             properties=properties,
         )
