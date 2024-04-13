@@ -1,0 +1,77 @@
+import hashlib
+
+from fastapi import UploadFile, HTTPException, status
+from src.logging_config import logger
+
+from src.core import settings
+from src.adapters.aws_repository import AwsRepository
+from src.ports.enums import SupportedFileTypes
+
+
+async def validate_file(file: UploadFile) -> bool:
+    if file is None:
+        return False
+
+    contents = await file.read()
+    size = len(contents)
+    if not 0 < size < 1024 * 1024:
+        await file.close()
+        logger.error(f"Size of file {file.filename} not from 0 to 1024KB")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Supported file size is 0 - 1 MB.",
+        )
+
+    await file.seek(0)
+
+    content_type = file.content_type
+    if (
+        content_type != SupportedFileTypes.PNG
+        and content_type != SupportedFileTypes.JPEG
+    ):
+        await file.close()
+        logger.error(
+            f"Supported file type is {content_type}. Must be {SupportedFileTypes.PNG} or {SupportedFileTypes.JPEG}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Supported file types are png and jpeg.",
+        )
+
+    logger.info(f"File {file.filename} successfully validated.")
+    return True
+
+
+async def upload_image(image_file: UploadFile, key: str) -> str:
+    contents = await image_file.read()
+
+    await image_file.close()
+
+    image_hash = hashlib.md5()
+    image_hash.update(contents)
+    image_hash.update(key.encode())
+
+    combined_hash = image_hash.hexdigest()
+
+    filename = f"{combined_hash}.png"
+
+    await AwsRepository().add_one(contents, filename)
+
+    logger.info(f"File {filename} successfully uploaded.")
+    return f"{settings.localstack_endpoint_url}/{settings.s3_bucket_name}/{filename}"
+
+
+async def delete_old_image(url: str):
+    last_slash_index = url.rfind("/")
+
+    filename = url[last_slash_index + 1 :]
+
+    try:
+        await AwsRepository().delete(filename)
+        logger.info(f"Old file {filename} successfully deleted.")
+    except Exception as e:
+        logger.error(f"Error with {filename}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error with retrieving from bucket.",
+        )

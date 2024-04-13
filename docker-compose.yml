@@ -1,0 +1,96 @@
+services:
+  app-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: app-rabbitmq
+    restart: always
+    volumes:
+      - .local/services/rabbitmq:/var/lib/rabbitmq/mnesia/
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    ports:
+      - "5672:${RABBITMQ_PORT}"
+      - 15672:15672
+    networks:
+      - app-network
+  app-db:
+    image: postgres:15
+    container_name: app-pg
+    restart: always
+    expose:
+      - "${DB_PORT}"
+    volumes:
+      - .local/services/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE_NAME}'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - app-network
+  app-redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:${REDIS_PORT}"
+    volumes:
+      - .local/services/redis:/data
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PORT: ${REDIS_PORT}
+    networks:
+      - app-network
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: localstack
+    hostname: localstack
+    ports:
+      - 4566:4566
+      - 8080:8080
+    environment:
+      - SERVICES=s3
+      - DEBUG=${DEBUG- }
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME=localstack
+    env_file:
+      - .env
+    volumes:
+      - ./src/scripts/localstack_script.sh:/etc/localstack/init/ready.d/script.sh
+      - .local/services/localstack-data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - app-network
+  app:
+    platform: linux/x86-64
+    container_name: app
+    build: .
+    entrypoint: sh -c "./src/scripts/entrypoint_migrations.sh"
+    env_file:
+      - .env
+    ports:
+      - "8000:${APP_PORT}"
+    volumes:
+      - .:/home/appuser
+    init: True
+    depends_on:
+      app-db:
+        condition: service_healthy
+      app-redis:
+        condition: service_started
+      app-rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - app-network
+networks:
+  app-network:

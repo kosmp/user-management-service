@@ -1,0 +1,214 @@
+from fastapi import HTTPException, status
+from fastapi.logger import logger
+from pydantic import UUID4
+from sqlalchemy import select, update, delete, asc, desc
+
+from sqlalchemy.exc import (
+    IntegrityError,
+    InvalidRequestError,
+    NoResultFound,
+)
+
+from src.ports.repositories.user_repository import UserRepository
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.ports.schemas.user import (
+    UserUpdateModelWithImage,
+    UserCreateModel,
+    UserResponseModel,
+    UserResponseModelWithPassword,
+)
+from src.adapters.database.models.users import User
+from src.core.exceptions import InvalidRequestException
+from typing import Union, List
+
+
+class SQLAlchemyUserRepository(UserRepository):
+    def __init__(self, db_session: AsyncSession):
+        self.db_session = db_session
+
+    async def create_user(self, user_data: UserCreateModel) -> UserResponseModel:
+        try:
+            new_user = User(
+                **user_data.model_dump(exclude_none=True, exclude_unset=True)
+            )
+
+            self.db_session.add(new_user)
+            await self.db_session.flush()
+
+            return UserResponseModel.model_validate(new_user)
+        except IntegrityError as integrity_err:
+            await self.db_session.rollback()
+            logger.error(f"Integrity error: {integrity_err}.")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="User already exists.",
+            )
+        except InvalidRequestError as inv_req_err:
+            await self.db_session.rollback()
+            logger.error(f"Invalid request error: {inv_req_err}.")
+            raise InvalidRequestException
+        except Exception as err:
+            await self.db_session.rollback()
+            logger.error(f"General error: {err}.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An unexpected error occurred while creating the user.",
+            )
+
+    async def get_user(
+        self,
+        user_id: UUID4 | None = None,
+        email: str | None = None,
+        username: str | None = None,
+        phone_number: str | None = None,
+    ) -> Union[UserResponseModelWithPassword, None]:
+        try:
+            if user_id:
+                query = select(User).where(User.id == str(user_id))
+            elif username:
+                query = select(User).where(User.username == username)
+            elif email:
+                query = select(User).where(User.email == email)
+            elif phone_number:
+                query = select(User).where(User.phone_number == phone_number)
+            else:
+                raise InvalidRequestError
+
+            res = (await self.db_session.execute(query)).one_or_none()
+
+            if res is None:
+                return res
+
+            return res[0]
+        except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid request error: {inv_req_err}.")
+            raise InvalidRequestException
+        except Exception as err:
+            logger.error(f"General error: {err}.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while retrieving the user.",
+            )
+
+    async def get_users(
+        self,
+        page: int = 1,
+        limit: int = 30,
+        filter_by_name: str = None,
+        filter_by_surname: str = None,
+        filter_by_group_id: str = None,
+        sort_by: str = None,
+        order_by: str = "asc",
+    ) -> List[UserResponseModel]:
+        try:
+            query = select(User)
+
+            if filter_by_group_id is not None:
+                query = query.where(User.group_id == filter_by_group_id)
+
+            if filter_by_name is not None:
+                query = query.where(User.name.ilike(f"%{filter_by_name}%"))
+
+            if filter_by_surname is not None:
+                query = query.where(User.surname.ilike(f"%{filter_by_surname}%"))
+
+            if sort_by is not None:
+                column_to_sort = getattr(User, sort_by)
+                if order_by == "asc":
+                    query = query.order_by(asc(column_to_sort))
+                elif order_by == "desc":
+                    query = query.order_by(desc(column_to_sort))
+
+            query = query.limit(limit).offset((page - 1) * limit)
+
+            users = await self.db_session.scalars(query)
+            return users.all()
+        except AttributeError as attr_err:
+            logger.error(f"AttributeError: {attr_err}.")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid attributes.",
+            )
+        except InvalidRequestError as inv_req_err:
+            logger.error(f"InvalidRequestError: {inv_req_err}.")
+            raise InvalidRequestException
+        except Exception as err:
+            logger.error(f"General error: {err}.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while retrieving users.",
+            )
+
+    async def update_user(
+        self, user_id: UUID4, user_data: UserUpdateModelWithImage
+    ) -> Union[UserResponseModel, None]:
+        try:
+            query = (
+                update(User)
+                .where(User.id == str(user_id))
+                .values(**user_data.model_dump(exclude_none=True, exclude_unset=True))
+                .returning(User)
+            )
+            res = await self.db_session.scalar(query)
+            await self.db_session.commit()
+            await self.db_session.refresh(res)
+            return res
+        except InvalidRequestError as inv_req_err:
+            logger.error(f"InvalidRequestError: {inv_req_err}.")
+            raise InvalidRequestException
+        except Exception as err:
+            logger.error(f"General error: {err}.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while updating the user.",
+            )
+
+    async def update_password(
+        self, user_id: UUID4, password: str
+    ) -> Union[UserResponseModel, None]:
+        try:
+            query = (
+                update(User)
+                .where(User.id == str(user_id))
+                .values(password=password)
+                .returning(User)
+            )
+            res = (await self.db_session.execute(query)).scalar_one_or_none()
+            await self.db_session.commit()
+            await self.db_session.refresh(res)
+            return res
+        except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid RequestError: {inv_req_err}.")
+            raise InvalidRequestException
+        except Exception as err:
+            logger.error(f"General error: {err}.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while updating the user.",
+            )
+
+    async def delete_user(self, user_id: UUID4) -> Union[UUID4, None]:
+        try:
+            query = delete(User).where(User.id == str(user_id)).returning(User.id)
+            res = await self.db_session.scalar(query)
+            await self.db_session.commit()
+
+            if res is not None:
+                return res
+            else:
+                raise NoResultFound
+        except NoResultFound as nrf_err:
+            logger.error(f"NoResultFound: {nrf_err}.")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        except InvalidRequestError as inv_req_err:
+            logger.error(f"Invalid RequestError: {inv_req_err}.")
+            raise InvalidRequestError
+        except Exception as err:
+            logger.error(f"General error: {err}.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while deleting the user.",
+            )
